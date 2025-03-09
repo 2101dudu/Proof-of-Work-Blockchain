@@ -1,6 +1,4 @@
-# blockchain
-
-This repo documents my journey on learning how to create a solid blockchain using GO. The README will be written as I go along, and the information may change during its writting.
+This repo documents my journey on learning how to create a solid blockchain using GO. The README will be written as I go along, and the information may change during its writing.
 
 # Intro
 
@@ -38,7 +36,7 @@ _An array of pointers is used to ensure no copies exist._
 
 ## Visualizing the blockchain
 
-Necessary methods like `addBlock()`, `createBlock()` and `createBlockChain()` help us create and expand the block chain, while `printBlockChain()` aids in visualizing what's going on.
+Necessary methods like `addBlock()`, `createBlock()` and `createBlockChain()` help us create and expand the blockchain, while `printBlockChain()` aids in visualizing what's going on.
 
 Let's test the following code:
 
@@ -81,12 +79,11 @@ Current Hash: 5d2047642951b0bf3f55965df158f915131b1d20be126163eb3363f37c3cef14
 --------
 ```
 
-We can see out blockchain taking shape. The data is being stored inside blocks that correctly reference the prvious block in the blockchain.
+We can see our blockchain taking shape. The data is being stored inside blocks that correctly reference the previous block in the blockchain.
 
-> !> [!NOTE]
-> Since the blockchain's hash is deterministic — the same input yields the same output — the code can be ran multiple times and the outout will be the exact same.
-> Normally, blockchains have multiple copied ditributed amongst multiple distributed nodes. **This is what makes blockchains so secure**
-> A node's blockchain may be compromised, i.e., its data tikered with, and have a node yield a diferent hash. Since that chain will be different from the N other exact copies of that chain, the error is quickly caught.
+Since the blockchain's hash is deterministic — the same input yields the same output — we can run the code multiple times and expect the same output. Normally, blockchains also have multiple copies distributed amongst various nodes. 
+**This is what makes blockchains so secure**.
+A node's blockchain may be compromised and have a node yield a different hash, i.e., its data tinkered with. Since that chain will be different from the N other exact copies of that chain, the error is quickly caught.
 
 Let's test this further. I'll change the data of the second block to `"Hello blockchain"` with a capital `H`.
 
@@ -114,4 +111,4 @@ Current Hash: 9628ec1c854a91f76e6fee6e37eaa220d7cf84834b3b66de77d30735fd7d095f
 --------
 ```
 
-If we now compare the hashes from this chain and the previous one, we see they differ starting from the second block.
+If we compare the hashes from this chain and the previous one, we can see that they differ starting from the second block.
