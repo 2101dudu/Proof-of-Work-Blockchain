@@ -3,9 +3,7 @@ package blockchain
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/binary"
 	"fmt"
-	"log"
 	"math"
 	"math/big"
 )
