@@ -82,6 +82,7 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 	return 0, []byte{}
 }
 
+// check if the proof-of-work's parameters ensure the target is met
 func (pow *ProofOfWork) Validate() bool {
 	var intHash big.Int
 
@@ -90,14 +91,4 @@ func (pow *ProofOfWork) Validate() bool {
 	intHash.SetBytes(hash[:])
 
 	return intHash.Cmp(pow.Target) == -1
-}
-
-func toHex(num int64) []byte {
-	buff := new(bytes.Buffer)
-	err := binary.Write(buff, binary.BigEndian, num)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	return buff.Bytes()
 }
