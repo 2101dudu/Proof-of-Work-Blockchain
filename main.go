@@ -7,7 +7,7 @@ func main() {
 
 	blockChain.AddBlock([]byte("Hello blockchain"))
 	blockChain.AddBlock([]byte("I'm the third block"))
-	blockChain.AddBlock([]byte("and I'm the forth block"))
+	blockChain.AddBlock([]byte("and I'm the fourth block"))
 
 	blockChain.PrintBlockChain()
 }

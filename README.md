@@ -46,7 +46,7 @@ func main() {
 
 	blockChain.addBlock([]byte("hello blockchain"))
 	blockChain.addBlock([]byte("I'm the third block"))
-	blockChain.addBlock([]byte("and I'm the forth block"))
+	blockChain.addBlock([]byte("and I'm the fourth block"))
 
 	blockChain.printBlockChain()
 }
@@ -82,7 +82,7 @@ Current Hash: 5d2047642951b0bf3f55965df158f915131b1d20be126163eb3363f37c3cef14
 We can see our blockchain taking shape. The data is being stored inside blocks that correctly reference the previous block in the blockchain.
 
 Since the blockchain's hash is deterministic — the same input yields the same output — we can run the code multiple times and expect the same output. Normally, blockchains also have multiple copies distributed amongst various nodes.
-**This is what makes blockchains so secure**.
+**This is makes blockchains really secure**.
 A node's blockchain may be compromised and have a node yield a different hash, i.e., its data tinkered with. Since that chain will be different from the N other exact copies of that chain, the error is quickly caught.
 
 Let's test this further. I'll change the data of the second block to `"Hello blockchain"` with a capital `H`.
@@ -115,11 +115,11 @@ If we compare the hashes from this chain and the previous one, we can see that t
 
 # Proof-of-work
 
-In simple terms, proof-of-work ensure that a network's node has lended enough computational power (`work`) to create a block. This newly created block can quickly be validated and `proves` the work computational power was indeed expended.
+In simple terms, proof-of-work ensure that a network's node has provided enough computational power (`work`) to create a block. This newly created block can quickly be validated and `proves` the work computational power was indeed expended.
 
 ## Why use proof-of-work?
 
-The way its set up, to create a new block one must spend enough computational power to find a hash that meets certain criteria. The work that's put into this node is extremelly harduous.
+The way its set up, to create a new block one must spend enough computational power to find a hash that meets certain criteria. The work that's put into this node is extremelly arduous.
 
 ## So, what's the actual "work"?
 
@@ -146,12 +146,12 @@ type ProofOfWork struct {
 ```
 
 - `Block`: the block that's trying to prove its work
-- `Target`: an integer treshold which a block's hash must confine to
+- `Target`: an integer threshold which a block's hash must confine to
 
 Let's take a closer look at what a target might look like. First, let's define a difficulty level from 0-256
 
 ```go
-const Difficulty = 10
+const Difficulty = 12
 ```
 
 The value of the `Target` parameter is determined by the inverse of the difficulty.
@@ -175,7 +175,7 @@ A block now has the goal of creating a hash that, **in this project**, has a low
 Say we have a node with data `"Hello World!"` and a starting `nonce` of `0`. Its hash will be computed like so:
 
 ```
-hash(block.PrevHash, block.PrevHash, Nonce, Difficulty) --> hash(..., "Hello World!", 0, 12)
+hash(block.PrevHash, block.Data, Nonce, Difficulty) --> hash(..., "Hello World!", 0, 12)
 ```
 
 Now, let's admit the output was the following:
@@ -184,14 +184,14 @@ Now, let's admit the output was the following:
 2be9e3e49cba8bcdc3c8a1e08d11fa520909249af0f82f409d0e412b83f0adb7
 ```
 
-Since out `Difficulty` is set to `12`, it's hexadecimal value has only `62` digits instead of `64`.
+Since out `Difficulty` is set to `12`, it's hexadecimal value has `2` leading zeros, making it only `62` digits instead of `64`.
 
 ```
 10000000000000000000000000000000000000000000000000000000000000
 ```
 
 We can now compare our block's hash's output to the target, and check if it's inferior. Since our output has 64 digits and no leading 0s, the block's hash did not meet the target.
-This make the process repeat all over again, but now with a nonve of `1`. This gives a completely different hash that may be less than the target.
+This make the process repeat all over again, but now with a nonce of `1`. This gives a completely different hash that may be less than the target.
 This whole mechanism is tucked away inside of the `Run()` method.
 
 Let's see it in action. With `Difficulty` set to `12`, we get the following:
@@ -202,14 +202,14 @@ Now, with `Difficulty` set to `20` — a marginal increase — our program take
 
 ## And why is proof-of-work so safe?
 
-Imagine we now dial up our `Difficulty` up to `64`. This would result in a target number that only has `49` digits.
+Imagine we now dial up our `Difficulty` up to `64`.
 
 ```
 1000000000000000000000000000000000000000000000000
 ```
 
-Comparing to the previous target, the number of acceptable values has gone from `2^4^62` to `2^4^49`.
-Since our hashes have `256 bits`, the probability of finding a hash has decreased from about `25%` all the down to `0.003%`
+Comparing to the previous target, the number of acceptable values has gone from `2^(256-12)` to `2^(256-20)`.
+Since our hashes have `256 bits`, the probability of finding a hash has decreased from about `0.024%` all the down to `0.000095%`
 The amount of time wasted grows exponentially, and the target´s difficulty increases with the lifespan of the blockchain.
 
 ### What if I was to attack the blockchain?
@@ -217,6 +217,6 @@ The amount of time wasted grows exponentially, and the target´s difficulty incr
 Let's say you wanted to re-write the past and change a double the amount of a transaction you did a while a go.
 
 1. Starting with that block, you would have to re-hash every single block up-until the present. This would take an unprecedented amount of work.
-2. Since PoW blockchains determine the vali chain as the longest one (i.e., the one with the most accumulated work), you would have to re-hash every block faster than every other miner combined. Since blockchains are mined by millions of distributed miners, you would need at leat `51%` of the network's computational power.
-3. Even if you could manage to aquire said power, no financial gain could even be garantied.
+2. Since PoW blockchains determine the valid chain as the longest one (i.e., the one with the most accumulated work), you would have to re-hash every block faster than every other miner combined. Since blockchains are mined by millions of distributed miners, you would need at leat `51%` of the network's computational power.
+3. Even if you could manage to acquire said power, no financial gain could even be guaranteed.
 4. And, worse of all, if an event like this happens, the network can ignore the your chain and switch to an honest fork
