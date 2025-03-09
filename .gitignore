@@ -25,4 +25,4 @@ go.work.sum
 .env
 
 .DS_Store
-tmp/
+tmp/blocks/*

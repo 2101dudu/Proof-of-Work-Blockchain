@@ -202,7 +202,6 @@ Now, with `Difficulty` set to `20` — a marginal increase — our program take
 
 https://github.com/user-attachments/assets/ebd7511f-e5b0-4820-a9cd-75494ffd64c1
 
-
 ## And why is proof-of-work so safe?
 
 Imagine we now dial up our `Difficulty` up to `64`.
@@ -223,3 +222,63 @@ Let's say you wanted to re-write the past and double the amount of a transaction
 2. Since PoW blockchains determine the valid chain as the longest one (i.e., the one with the most accumulated work), you would have to re-hash every block faster than every other miner combined. Since blockchains are mined by millions of distributed miners, you would need at least `51%` of the network's computational power.
 3. Even if you could manage to acquire said power, no financial gain could even be guaranteed.
 4. And, worse of all, if an event like this happens, the network can ignore your chain and switch to an honest fork
+
+# Storing the blockchain
+
+A blockchain is nothing without a persistent memory storing it. To this end, we will use native GO database library `BadgerDB` to handle the read-write storage of our blockchain.
+BadgerDB works with `key:value` pairs and storing the bytes in regular files and folders. Since BadgerDB only works with slices of `byte`, we need to refactor some of our structs data handling.
+
+Using `encoding/gob`, we can now use the `Serialize()` and `Deserialize()` methods to translate date to and from byte structures.
+
+We can also update our blockchain structures by including a parameter referencing the badger database.
+
+```go
+const (
+	dbPath = "./tmp/blocks"
+)
+
+type BlockChain struct {
+	LastHash []byte
+	Database *badger.DB
+}
+```
+
+This means that the blockchain no longer keeps in memory the totallity of blocks, but rather reads and writes to the database when necessary.
+We also need to keep track of which block the blockchain is at, so we added a parameter `LastHash`.
+
+With this done, we need to rethink our blockchain methods. The `CreateBlockChain()` and `AddBlock()` methods now need to read and write from the DB as needed.
+
+In the meantime, we lost the ability to iterate over our blockchains' blocks.
+We can recoup this functionality by creating a helper structure
+
+```go
+type BlockChainIterator struct {
+	CurrentHash []byte
+	Database    *badger.DB
+}
+```
+
+and make use of the `Iterator()` and `Next()` methods to iterate over every block.
+This completes the persistent storage part, but now we can't really see what's going on.
+
+# CLI
+
+We can implement a simple CLI to remove hardcoded blockchain methods and give the program's users added functionalities.
+Using `cli.Run()` on the `main()` method, our program now offers the users the ability to `print` the blockchain or `add` a new block with a given `data`. The full usage is as follows:
+
+```
+Usage:
+    add -block BLOCK_DATA — adds a block to the blockchain
+    print — Prints the blocks in the blockchain
+```
+
+Let's put it in action!
+
+In this first example, the database has no entry, so a genesis node needs do be created and, most importantly, sign its proof-of-work.
+
+Now, in the following example, let's add two blocks to our blockchain.
+
+# To do
+
+- [ ] optimize performance given a large enough number of blocks by storing each block in its separate file
+- [ ] have a parameter to sign the PoW to allow dinamical difficulty levels
