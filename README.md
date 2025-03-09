@@ -1,10 +1,10 @@
-This repo documents my journey on learning how to create a solid blockchain using GO. The README will be written as I go along, and the information may change during its writing.
+This repo documents my journey in learning how to create a solid blockchain using GO. The README will be written as I go along, and the information may change during its writing.
 
 # Intro
 
 ## Blockchain
 
-The concept of a blockchain is actually really simple. Just link together some "blocks" and you have yourself a block-`chain`. You can define a block by a structure that contains some data and some information relevant to the chain as a whole.
+The concept of a blockchain is actually really simple. Just link together some "blocks" and you have yourself a block-`chain`. You can define a block as a structure that contains some data and some information relevant to the chain as a whole.
 
 ### Defining the structure of a block
 
@@ -36,7 +36,7 @@ _An array of pointers is used to ensure no copies exist._
 
 ## Visualizing the blockchain
 
-Necessary methods like `addBlock()`, `createBlock()` and `createBlockChain()` help us create and expand the blockchain, while `printBlockChain()` aids in visualizing what's going on.
+Necessary methods like `addBlock()`, `createBlock()`, and `createBlockChain()` help us create and expand the blockchain, while `printBlockChain()` aids in visualizing what's going on.
 
 Let's test the following code:
 
@@ -74,15 +74,15 @@ Current Hash: 3424b464982a9654b54c1b8e41f49dd9880f040c4cd83dc81f39681072371acb
 --------
 --------
 Previous Hash: 3424b464982a9654b54c1b8e41f49dd9880f040c4cd83dc81f39681072371acb
-Data: and I'm the forth block
+Data: and I'm the fourth block
 Current Hash: 5d2047642951b0bf3f55965df158f915131b1d20be126163eb3363f37c3cef14
 --------
 ```
 
-We can see our blockchain taking shape. The data is being stored inside blocks that correctly reference the previous block in the blockchain.
+We can see our blockchain taking shape. The data is stored inside blocks that correctly reference the previous block in the blockchain.
 
 Since the blockchain's hash is deterministic — the same input yields the same output — we can run the code multiple times and expect the same output. Normally, blockchains also have multiple copies distributed amongst various nodes.
-**This is makes blockchains really secure**.
+**This makes blockchains really secure**.
 A node's blockchain may be compromised and have a node yield a different hash, i.e., its data tinkered with. Since that chain will be different from the N other exact copies of that chain, the error is quickly caught.
 
 Let's test this further. I'll change the data of the second block to `"Hello blockchain"` with a capital `H`.
@@ -106,7 +106,7 @@ Current Hash: ec50c8c9dcf5f4f6f57f14978ca518511e2c863465d318a31b403efb549b6841
 --------
 --------
 Previous Hash: ec50c8c9dcf5f4f6f57f14978ca518511e2c863465d318a31b403efb549b6841
-Data: and I'm the forth block
+Data: and I'm the fourth block
 Current Hash: 9628ec1c854a91f76e6fee6e37eaa220d7cf84834b3b66de77d30735fd7d095f
 --------
 ```
@@ -115,11 +115,11 @@ If we compare the hashes from this chain and the previous one, we can see that t
 
 # Proof-of-work
 
-In simple terms, proof-of-work ensure that a network's node has provided enough computational power (`work`) to create a block. This newly created block can quickly be validated and `proves` the work computational power was indeed expended.
+In simple terms, proof-of-work ensures that a network's node has provided enough computational power (`work`) to create a block. This newly created block can quickly be validated and `proves` the work computational power was indeed expended.
 
 ## Why use proof-of-work?
 
-The way its set up, to create a new block one must spend enough computational power to find a hash that meets certain criteria. The work that's put into this node is extremelly arduous.
+The way it's set up, to create a new block one must spend enough computational power to find a hash that meets certain criteria. The work that's put into this node is extremely arduous.
 
 ## So, what's the actual "work"?
 
@@ -134,7 +134,7 @@ type Block struct {
 }
 ```
 
-This value represents a sort of iteration count of the block, and is a way to get different hash values from the same contents of the block.
+This value represents a sort of iteration count of the block and is a way to get different hash values from the same contents of the block.
 
 We can also define a structure for a proof-of-work.
 
@@ -202,7 +202,6 @@ Now, with `Difficulty` set to `20` — a marginal increase — our program take
 
 https://github.com/user-attachments/assets/ebd7511f-e5b0-4820-a9cd-75494ffd64c1
 
-
 ## And why is proof-of-work so safe?
 
 Imagine we now dial up our `Difficulty` up to `64`.
@@ -223,3 +222,63 @@ Let's say you wanted to re-write the past and double the amount of a transaction
 2. Since PoW blockchains determine the valid chain as the longest one (i.e., the one with the most accumulated work), you would have to re-hash every block faster than every other miner combined. Since blockchains are mined by millions of distributed miners, you would need at least `51%` of the network's computational power.
 3. Even if you could manage to acquire said power, no financial gain could even be guaranteed.
 4. And, worse of all, if an event like this happens, the network can ignore your chain and switch to an honest fork
+
+# Storing the blockchain
+
+A blockchain is nothing without a persistent memory storing it. To this end, we will use the native GO database library `BadgerDB` to handle the read-write storage of our blockchain.
+BadgerDB works with `key: value` pairs and stores the bytes in regular files and folders. Since BadgerDB only works with slices of `byte`, we need to refactor some of our structs data handlings.
+
+Using `encoding/gob`, we can now use the `Serialize()` and `Deserialize()` methods to translate data to and from byte structures.
+
+We can also update our blockchain structures by including a parameter referencing the Badger database.
+
+```go
+const (
+	dbPath = "./tmp/blocks"
+)
+
+type BlockChain struct {
+	LastHash []byte
+	Database *badger.DB
+}
+```
+
+This means that the blockchain no longer keeps in memory the totality of blocks, but rather reads and writes to the database when necessary.
+We also need to keep track of which block the blockchain is at, so we added a parameter `LastHash`.
+
+With this done, we need to rethink our blockchain methods. The `CreateBlockChain()` and `AddBlock()` methods now need to read and write from the DB as needed.
+
+In the meantime, we lost the ability to iterate over our blockchains' blocks.
+We can recoup this functionality by creating a helper structure,
+
+```go
+type BlockChainIterator struct {
+	CurrentHash []byte
+	Database    *badger.DB
+}
+```
+
+and make use of the `Iterator()` and `Next()` methods to iterate over every block.
+This completes the persistent storage part, but now we can't really see what's going on.
+
+# CLI
+
+We can implement a simple CLI to remove hardcoded blockchain methods and give the program's users added functionalities.
+Using `cli.Run()` on the `main()` method, our program now offers the users the ability to `print` the blockchain or `add` a new block with a given `data`. The full usage is as follows:
+
+```
+Usage:
+    add -block BLOCK_DATA — adds a block to the blockchain
+    print — Prints the blocks in the blockchain
+```
+
+Let's put it in action!
+
+In this first example, the database has no entry, so a genesis node needs to be created and, most importantly, sign its proof-of-work.
+
+Now, in the following example, let's add two blocks to our blockchain.
+
+# To do
+
+- [ ] optimize performance given a large enough number of blocks by storing each block in its separate file
+- [ ] have a parameter to sign the PoW to allow dynamical difficulty levels

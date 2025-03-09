@@ -1,13 +1,15 @@
 package main
 
-import block "golang-blockchain/blockchain"
+import (
+	"golang-blockchain/blockchain"
+	"os"
+)
 
 func main() {
-	blockChain := block.CreateBlockChain()
+	defer os.Exit(0)
+	chain := blockchain.CreateBlockChain()
+	defer chain.Database.Close()
 
-	blockChain.AddBlock([]byte("Hello blockchain"))
-	blockChain.AddBlock([]byte("I'm the third block"))
-	blockChain.AddBlock([]byte("and I'm the fourth block"))
-
-	blockChain.PrintBlockChain()
+	cli := blockchain.CommandLine{BlockChain: chain}
+	cli.Run()
 }
