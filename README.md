@@ -276,7 +276,15 @@ Let's put it in action!
 
 In this first example, the database has no entry, so a genesis node needs to be created and, most importantly, sign its proof-of-work.
 
+
+https://github.com/user-attachments/assets/5f0d926a-a435-4a82-9936-213b17f265b2
+
+
 Now, in the following example, let's add two blocks to our blockchain.
+
+
+https://github.com/user-attachments/assets/f0047a3b-5864-47e9-8fdf-340a0504e0f8
+
 
 # To do
 
