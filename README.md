@@ -130,7 +130,7 @@ type Block struct {
 	Hash     []byte // a hash of the Data + PrevHash
 	Data     []byte
 	PrevHash []byte // linked list functionality (chain)
-    Nonce    int
+    	Nonce    int
 }
 ```
 
@@ -184,21 +184,24 @@ Now, let's admit the output was the following:
 2be9e3e49cba8bcdc3c8a1e08d11fa520909249af0f82f409d0e412b83f0adb7
 ```
 
-Since out `Difficulty` is set to `12`, it's hexadecimal value has `2` leading zeros, making it only `62` digits instead of `64`.
+Since our `Difficulty` is set to `12`, its hexadecimal value has `2` leading zeros, making it only `62` digits instead of `64`.
 
 ```
 10000000000000000000000000000000000000000000000000000000000000
 ```
 
 We can now compare our block's hash's output to the target, and check if it's inferior. Since our output has 64 digits and no leading 0s, the block's hash did not meet the target.
-This make the process repeat all over again, but now with a nonce of `1`. This gives a completely different hash that may be less than the target.
+This makes the process start over again, but now with a nonce of `1`. This gives a completely different hash that may be less than the target.
 This whole mechanism is tucked away inside of the `Run()` method.
 
 Let's see it in action. With `Difficulty` set to `12`, we get the following:
-![proof-of-work showcase](assets/pow-shocase.mov))
+
+https://github.com/user-attachments/assets/842cece7-ba54-4648-bb33-583bf88b440a
 
 Now, with `Difficulty` set to `20` — a marginal increase — our program takes a bit more time:
-![proof-of-work showcase 2](assets/pow-shocase-2.mov))
+
+https://github.com/user-attachments/assets/ebd7511f-e5b0-4820-a9cd-75494ffd64c1
+
 
 ## And why is proof-of-work so safe?
 
@@ -208,15 +211,15 @@ Imagine we now dial up our `Difficulty` up to `64`.
 1000000000000000000000000000000000000000000000000
 ```
 
-Comparing to the previous target, the number of acceptable values has gone from `2^(256-12)` to `2^(256-20)`.
-Since our hashes have `256 bits`, the probability of finding a hash has decreased from about `0.024%` all the down to `0.000095%`
+Compared to the previous target, the number of acceptable values has gone from `2^(256-12)` to `2^(256-20)`.
+Since our hashes have `256 bits`, the probability of finding a hash has decreased from about `0.024%` down to `0.000095%`
 The amount of time wasted grows exponentially, and the target´s difficulty increases with the lifespan of the blockchain.
 
 ### What if I was to attack the blockchain?
 
-Let's say you wanted to re-write the past and change a double the amount of a transaction you did a while a go.
+Let's say you wanted to re-write the past and double the amount of a transaction you did a while ago.
 
-1. Starting with that block, you would have to re-hash every single block up-until the present. This would take an unprecedented amount of work.
-2. Since PoW blockchains determine the valid chain as the longest one (i.e., the one with the most accumulated work), you would have to re-hash every block faster than every other miner combined. Since blockchains are mined by millions of distributed miners, you would need at leat `51%` of the network's computational power.
+1. Starting with that block, you would have to re-hash every single block up until the present. This would take an unprecedented amount of work.
+2. Since PoW blockchains determine the valid chain as the longest one (i.e., the one with the most accumulated work), you would have to re-hash every block faster than every other miner combined. Since blockchains are mined by millions of distributed miners, you would need at least `51%` of the network's computational power.
 3. Even if you could manage to acquire said power, no financial gain could even be guaranteed.
-4. And, worse of all, if an event like this happens, the network can ignore the your chain and switch to an honest fork
+4. And, worse of all, if an event like this happens, the network can ignore your chain and switch to an honest fork
