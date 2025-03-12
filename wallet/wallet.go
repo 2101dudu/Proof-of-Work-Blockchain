@@ -5,8 +5,10 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
-	"fmt"
+	"encoding/hex"
+	"encoding/json"
 	"log"
+	"math/big"
 
 	"golang.org/x/crypto/ripemd160"
 )
@@ -21,6 +23,64 @@ type Wallet struct {
 	PublicKey  []byte
 }
 
+// implement custom JSON marshalling for the wallel
+func (w Wallet) MarshalJSON() ([]byte, error) {
+	// create a helper struct with hex representations of the key components.
+	type walletJSON struct {
+		D            string `json:"d"`
+		PublicKeyX   string `json:"publicKeyX"`
+		PublicKeyY   string `json:"publicKeyY"`
+		RawPublicKey string `json:"rawPublicKey"`
+	}
+	temp := walletJSON{
+		D:            w.PrivateKey.D.Text(16),
+		PublicKeyX:   w.PrivateKey.PublicKey.X.Text(16),
+		PublicKeyY:   w.PrivateKey.PublicKey.Y.Text(16),
+		RawPublicKey: hex.EncodeToString(w.PublicKey),
+	}
+	return json.Marshal(temp)
+}
+
+// implement custom JSON unmarshalling for the wallet
+func (w *Wallet) UnmarshalJSON(data []byte) error {
+	// define a helper struct matching the one in MarshalJSON
+	type walletJSON struct {
+		D            string `json:"d"`
+		PublicKeyX   string `json:"publicKeyX"`
+		PublicKeyY   string `json:"publicKeyY"`
+		RawPublicKey string `json:"rawPublicKey"`
+	}
+	var temp walletJSON
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	d := new(big.Int)
+	d.SetString(temp.D, 16)
+	x := new(big.Int)
+	x.SetString(temp.PublicKeyX, 16)
+	y := new(big.Int)
+	y.SetString(temp.PublicKeyY, 16)
+
+	// reconstruct the ecdsa.PrivateKey using P256 as the curve
+	w.PrivateKey = ecdsa.PrivateKey{
+		PublicKey: ecdsa.PublicKey{
+			Curve: elliptic.P256(),
+			X:     x,
+			Y:     y,
+		},
+		D: d,
+	}
+
+	raw, err := hex.DecodeString(temp.RawPublicKey)
+	if err != nil {
+		return err
+	}
+	w.PublicKey = raw
+
+	return nil
+}
+
 func (w Wallet) address() []byte {
 	publicKeyHashed := publicKeyHash(w.PublicKey)
 
@@ -30,10 +90,6 @@ func (w Wallet) address() []byte {
 	fullHash := append(versionedHash, checksum...)
 
 	address := base58Encode(fullHash)
-
-	fmt.Printf("Public key: %x\n", w.PublicKey)
-	fmt.Printf("Public hash: %x\n", publicKeyHashed)
-	fmt.Printf("Address: %x\n", address)
 
 	return address
 }
@@ -46,7 +102,7 @@ func newKeyPair() (ecdsa.PrivateKey, []byte) {
 		log.Panic(err)
 	}
 
-	// elliptic curve multiplication
+	// concatenate X and Y coordinates to form the public key
 	publicKey := append(privateKey.PublicKey.X.Bytes(), privateKey.PublicKey.Y.Bytes()...)
 
 	return *privateKey, publicKey

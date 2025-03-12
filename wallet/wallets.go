@@ -1,9 +1,7 @@
 package wallet
 
 import (
-	"bytes"
-	"crypto/elliptic"
-	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -12,7 +10,7 @@ import (
 const walletFile = "./tmp/wallets.data"
 
 type Wallets struct {
-	Wallets map[string]*Wallet
+	Wallets map[string]*Wallet `json:"wallets"`
 }
 
 func CreateWallets() (*Wallets, error) {
@@ -51,37 +49,28 @@ func (wallets *Wallets) loadFile() error {
 		return err
 	}
 
-	var ws Wallets
-
 	fileContent, err := os.ReadFile(walletFile)
 	if err != nil {
 		return err
 	}
 
-	gob.Register(elliptic.P256())
-	decoder := gob.NewDecoder(bytes.NewReader(fileContent))
-	err = decoder.Decode(&ws)
+	var ws Wallets
+	err = json.Unmarshal(fileContent, &ws)
 	if err != nil {
 		return err
 	}
 
 	wallets.Wallets = ws.Wallets
-
 	return nil
 }
 
 func (wallets *Wallets) SaveFile() {
-	var content bytes.Buffer
-
-	gob.Register(elliptic.P256())
-
-	encoder := gob.NewEncoder(&content)
-	err := encoder.Encode(wallets)
+	data, err := json.MarshalIndent(wallets, "", "  ")
 	if err != nil {
 		log.Panic(err)
 	}
 
-	err = os.WriteFile(walletFile, content.Bytes(), 0644)
+	err = os.WriteFile(walletFile, data, 0644)
 	if err != nil {
 		log.Panic(err)
 	}
