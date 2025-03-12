@@ -15,17 +15,6 @@ type Transaction struct {
 	Outputs []TransactionOutput // newly created outputs
 }
 
-type TransactionInput struct {
-	ID        []byte // the ID of the transaction whose outputs will serve as inputs
-	Output    int    // the index of the list of outputs of that transaction
-	Signature string // ownership proof
-}
-
-type TransactionOutput struct {
-	Value     int    // token amount
-	PublicKey string // the recepient's address
-}
-
 // hash the transaction's bytes
 func (tx *Transaction) setID() {
 	var encoded bytes.Buffer
@@ -56,7 +45,7 @@ func CoinbaseTx(to, data string) *Transaction {
 }
 
 // create a new transaction
-func newTransaction(from, to string, amount int, chain *BlockChain) *Transaction {
+func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction {
 	var inputs []TransactionInput
 	var outputs []TransactionOutput
 
@@ -91,12 +80,4 @@ func newTransaction(from, to string, amount int, chain *BlockChain) *Transaction
 
 func (tx *Transaction) isCoinbase() bool {
 	return len(tx.Inputs) == 1 && len(tx.Inputs[0].ID) == 0 && tx.Inputs[0].Output == -1
-}
-
-func (txIn *TransactionInput) canUnlock(address string) bool {
-	return txIn.Signature == address
-}
-
-func (txOut *TransactionOutput) canBeUnlocked(publicKey string) bool {
-	return txOut.PublicKey == publicKey
 }

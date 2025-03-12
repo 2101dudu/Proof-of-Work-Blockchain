@@ -1,4 +1,4 @@
-package blockchain
+package cli
 
 import (
 	"flag"
@@ -6,6 +6,9 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+
+	"golang-blockchain/blockchain"
+	"golang-blockchain/wallet"
 )
 
 type CommandLine struct{}
@@ -16,10 +19,12 @@ func (cli *CommandLine) printUsage() {
 	fmt.Println("   createblockchain -address ADDRESS —— create a fresh blockchain and have the ADDRESS mine the genesis block")
 	fmt.Println("   send -from FROM -to TO -amount AMONUT —— send AMOUNT tokens to TO from FROM")
 	fmt.Println("   printchain —— prints the blocks in the blockchain")
+	fmt.Println("   createwallet —— create a new wallet")
+	fmt.Println("   listaddresses —— list the addresses in the wallet file")
 }
 
 func (cli *CommandLine) getBalance(address string) {
-	chain := ContinueBlockChain()
+	chain := blockchain.ContinueBlockChain()
 	defer chain.Database.Close()
 
 	amount := 0
@@ -35,23 +40,23 @@ func (cli *CommandLine) getBalance(address string) {
 }
 
 func (cli *CommandLine) createBlockChain(address string) {
-	chain := CreateBlockChain(address)
+	chain := blockchain.CreateBlockChain(address)
 	chain.Database.Close()
 	fmt.Println("blockchain created!")
 }
 
 func (cli *CommandLine) send(from, to string, amount int) {
-	chain := ContinueBlockChain()
+	chain := blockchain.ContinueBlockChain()
 	defer chain.Database.Close()
 
-	t := newTransaction(from, to, amount, chain)
-	chain.AddBlock([]*Transaction{t})
+	t := blockchain.NewTransaction(from, to, amount, chain)
+	chain.AddBlock([]*blockchain.Transaction{t})
 
 	fmt.Printf("Sent %d tokens to %s\n", amount, to)
 }
 
 func (cli *CommandLine) printChain() {
-	chain := ContinueBlockChain()
+	chain := blockchain.ContinueBlockChain()
 	defer chain.Database.Close()
 	iter := chain.Iterator()
 
@@ -62,7 +67,7 @@ func (cli *CommandLine) printChain() {
 		fmt.Printf("Previous Hash: %x\n", block.PrevHash)
 		fmt.Printf("Current Hash: %x\n", block.Hash)
 
-		pow := NewProof(block)
+		pow := blockchain.NewProof(block)
 		fmt.Printf("Proof-of-work: %s\n", strconv.FormatBool(pow.Validate()))
 		fmt.Printf("--------\n")
 
@@ -70,6 +75,23 @@ func (cli *CommandLine) printChain() {
 		if len(block.PrevHash) == 0 {
 			break
 		}
+	}
+}
+
+func (cli *CommandLine) createWallet() {
+	wallets, _ := wallet.CreateWallets()
+	address := wallets.AddWallet()
+	wallets.SaveFile()
+
+	fmt.Printf("The address of your new wallet: %s\n", address)
+}
+
+func (cli *CommandLine) listAddresses() {
+	wallets, _ := wallet.CreateWallets()
+	addresses := wallets.GetAllAddresses()
+
+	for _, address := range addresses {
+		fmt.Println(address)
 	}
 }
 
@@ -87,6 +109,8 @@ func (cli *CommandLine) Run() {
 	createBlockChainCmd := flag.NewFlagSet("createblockchain", flag.ExitOnError)
 	sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
 	printChainCmd := flag.NewFlagSet("printchain", flag.ExitOnError)
+	createwalletcmd := flag.NewFlagSet("createwallet", flag.ExitOnError)
+	listaddressescmd := flag.NewFlagSet("listaddresses", flag.ExitOnError)
 
 	getBalanceAddresss := getBalanceCmd.String("address", "", "The address of the account you want to check the balance on")
 	createBlockChainAddress := createBlockChainCmd.String("address", "", "The address of the account who will mine the genesis block")
@@ -97,16 +121,22 @@ func (cli *CommandLine) Run() {
 	switch os.Args[1] {
 	case "getbalance":
 		err := getBalanceCmd.Parse(os.Args[2:])
-		Handle(err)
+		blockchain.Handle(err)
 	case "createblockchain":
 		err := createBlockChainCmd.Parse(os.Args[2:])
-		Handle(err)
+		blockchain.Handle(err)
 	case "send":
 		err := sendCmd.Parse(os.Args[2:])
-		Handle(err)
+		blockchain.Handle(err)
 	case "printchain":
 		err := printChainCmd.Parse(os.Args[2:])
-		Handle(err)
+		blockchain.Handle(err)
+	case "createwallet":
+		err := createwalletcmd.Parse(os.Args[2:])
+		blockchain.Handle(err)
+	case "listaddresses":
+		err := listaddressescmd.Parse(os.Args[2:])
+		blockchain.Handle(err)
 	default:
 		cli.printUsage()
 		runtime.Goexit()
@@ -138,5 +168,13 @@ func (cli *CommandLine) Run() {
 
 	if printChainCmd.Parsed() {
 		cli.printChain()
+	}
+
+	if createwalletcmd.Parsed() {
+		cli.createWallet()
+	}
+
+	if listaddressescmd.Parsed() {
+		cli.listAddresses()
 	}
 }

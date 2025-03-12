@@ -371,19 +371,32 @@ Alice sends **7 tokens** to Bob, but since she started with **10 tokens**, she n
 - **Outputs**:
   - 7 tokens to Bob.
   - 3 tokens returned to Alice.
- 
+
 ## Showcase
 
 Let's see what we have got in action.
 
-
-
 https://github.com/user-attachments/assets/0408679d-f936-47fe-858e-0c8bc0ec2e01
 
+# Wallets
 
+Right now, the blockchain is using conventional strings to define an address.
+Now is the perfect opportunity to introduce wallets into the blockchain.
+Wallets hold your cryptographic keys, serving as the cornerstone for secure identity and transaction management in the blockchain.
+
+## What Are Wallets?
+
+Wallets encapsulate a user's identity by managing a pair of cryptographic keys — a private key that must be kept secret, and a public key used to derive the blockchain address.
+Our wallets use the Elliptic Curve Digital Signature Algorithm (ECDSA) with the P256 curve. The private key is generated securely, and the public key is constructed by concatenating the X and Y coordinates from the ECDSA key pair.
+
+## Creating addresses
+
+A blockchain address is derived by hashing a random public key with SHA256, then with RIPEMD160, appending a version byte, and adding a checksum before finally encoding the result in Base58.
+Base 58 is similar to base 64, only that its missing the characters `0 O l I + /`. This was done because addresses are the main way that people send tokens to, and having addresses with those characters can make the addresses wrongly interpreted and misstyped
+
+As of writing, I'm yet to integrate the wallets' functionalities to the blockchain. So, for now, they do the exact same thing as conventional strings. :)
 
 # To do
 
 - [ ] optimize performance given a large enough number of blocks by storing each block in its separate file
 - [ ] have a parameter to sign the PoW to allow dynamic difficulty levels
-

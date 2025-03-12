@@ -1,12 +1,12 @@
 package main
 
 import (
-	"golang-blockchain/blockchain"
+	"golang-blockchain/cli"
 	"os"
 )
 
 func main() {
 	defer os.Exit(0)
-	cli := blockchain.CommandLine{}
+	cli := cli.CommandLine{}
 	cli.Run()
 }
