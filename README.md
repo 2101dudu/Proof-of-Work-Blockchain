@@ -327,13 +327,13 @@ type Transaction struct {
 
 Like blocks, transactions need previous transactions to point to.
 Similarly to the genesis blocks, a coinbase transaction referes to the first transaction of the blockchain.
-This special transaction is also used to reward the first miner with tokens, and we can created it using the `CoinbaseTx()` method.
+This special transaction is also used to reward the first miner with tokens, and we can create it using the `CoinbaseTx()` method.
 
-Once that's done, regular transactions can ensue by the help of the `newTransaction()` method. A new transaction block only occurs when the sender has enough tokens for that transaction.
+Once that's done, regular transactions can ensue with the help of the `newTransaction()` method. A new transaction block only occurs when the sender has enough tokens for that transaction.
 
 ## Practical scenario
 
-Alice has 10 tokens and wants to send 7 tokens to Bob. In a blockchain system, this transaction is structured into **inputs** and **outputs**.
+Alice has 10 tokens and wants to send 7 to Bob. In a blockchain system, this transaction is structured into inputs and outputs.
 
 ### Step 1: Identifying the Input
 
@@ -371,12 +371,19 @@ Alice sends **7 tokens** to Bob, but since she started with **10 tokens**, she n
 - **Outputs**:
   - 7 tokens to Bob.
   - 3 tokens returned to Alice.
+ 
+## Showcase
+
+Let's see what we have got in action.
+
+
+
+https://github.com/user-attachments/assets/0408679d-f936-47fe-858e-0c8bc0ec2e01
+
+
 
 # To do
 
 - [ ] optimize performance given a large enough number of blocks by storing each block in its separate file
-- [ ] have a parameter to sign the PoW to allow dynamical difficulty levels
+- [ ] have a parameter to sign the PoW to allow dynamic difficulty levels
 
-```
-
-```
