@@ -2,26 +2,34 @@ package blockchain
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/gob"
-	"log"
 )
 
 type Block struct {
-	Hash     []byte // a hash of the Data + PrevHash
-	Data     []byte
-	PrevHash []byte // linked list functionality (chain)
-	Nonce    int
+	Hash         []byte         // a hash of the Data + PrevHash
+	Transactions []*Transaction // the data of a block
+	PrevHash     []byte         // linked list functionality (chain)
+	Nonce        int
+}
+
+// helper function to hash the blocks' transactions
+func (b *Block) HashTransactions() []byte {
+	var txHashes [][]byte
+	var txHash [32]byte
+
+	for _, tx := range b.Transactions {
+		txHashes = append(txHashes, tx.ID)
+	}
+	txHash = sha256.Sum256(bytes.Join(txHashes, []byte{}))
+
+	return txHash[:]
 }
 
 // create a new instance of block with the given parameters
-// create block now actually needs to be calculated and have a proof of work
-func createBlock(data []byte, prevHash []byte) *Block {
-	if data == nil {
-		log.Panic("Cannot create a block with null data")
-	}
-
-	block := &Block{[]byte{}, data, prevHash, 0}
-	pow := NewProof(block)
+func createBlock(transactions []*Transaction, prevHash []byte) *Block {
+	block := &Block{[]byte{}, transactions, prevHash, 0}
+	pow := NewProof(block) // proove block's creation
 	nonce, hash := pow.Run()
 
 	block.Hash = hash[:]
@@ -31,8 +39,8 @@ func createBlock(data []byte, prevHash []byte) *Block {
 }
 
 // create a genesis block exists — without it, the first "real" block would now have a previous block hash to reference
-func genesis() *Block {
-	return createBlock([]byte("GENSIS_BLOCK"), []byte{})
+func genesis(coinbase *Transaction) *Block {
+	return createBlock([]*Transaction{coinbase}, []byte{})
 }
 
 // GO's BadgerDB requires byte slices, so a Serialize() needs to exist

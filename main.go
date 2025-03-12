@@ -7,9 +7,6 @@ import (
 
 func main() {
 	defer os.Exit(0)
-	chain := blockchain.CreateBlockChain()
-	defer chain.Database.Close()
-
-	cli := blockchain.CommandLine{BlockChain: chain}
+	cli := blockchain.CommandLine{}
 	cli.Run()
 }
