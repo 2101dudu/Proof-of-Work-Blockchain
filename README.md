@@ -276,17 +276,107 @@ Let's put it in action!
 
 In this first example, the database has no entry, so a genesis node needs to be created and, most importantly, sign its proof-of-work.
 
-
 https://github.com/user-attachments/assets/5f0d926a-a435-4a82-9936-213b17f265b2
-
 
 Now, in the following example, let's add two blocks to our blockchain.
 
-
 https://github.com/user-attachments/assets/f0047a3b-5864-47e9-8fdf-340a0504e0f8
 
+# Transactions
+
+Given what we have, let's introduce the concept of transactions to the blockchain.
+Since a blockchain is a public database, we never want to store sensitive information like bank accounts or balances.
+Transactions allow the transfer of tokens between addresses by consuming previous outputs and creating new ones. This is a major step in understanding how a blockchain manages its existing tokens.
+
+## So... what is a transaction?
+
+At its core, a transaction represents the transfer of value between participants in the blockchain. Instead of tracking balances like a traditional bank ledger, blockchain transactions follow an input-output model. Each transaction spends outputs from previous transactions and creates new outputs that can be used in future transactions.
+
+## Transaction structure
+
+A transaction contains simply encapsulates inputs and outputs:
+
+```go
+type Transaction struct {
+	ID      []byte              // unique transaction identifier (hash)
+	Inputs  []TransactionInput  // references to previous transaction outputs
+	Outputs []TransactionOutput // new outputs containing tokens and recipient addresses
+}
+```
+
+- `Inputs`: a slice that points to outputs from previous transactions (UTXOs)
+
+  ```go
+  type TransactionInput struct {
+      ID        []byte // the ID of the transaction whose outputs will serve as inputs
+      Output    int    // the index of the list of outputs of that transaction
+      Signature string // ownership proof
+  }
+  ```
+
+- `Outputs`: a slice containing new UTXOs, specifying the amount and the recipient's public key
+
+  ```go
+  type TransactionOutput struct {
+      Value     int    // token amount
+      PublicKey string // the recepient's address
+  }
+  ```
+
+## Kickstart transactions
+
+Like blocks, transactions need previous transactions to point to.
+Similarly to the genesis blocks, a coinbase transaction referes to the first transaction of the blockchain.
+This special transaction is also used to reward the first miner with tokens, and we can created it using the `CoinbaseTx()` method.
+
+Once that's done, regular transactions can ensue by the help of the `newTransaction()` method. A new transaction block only occurs when the sender has enough tokens for that transaction.
+
+## Practical scenario
+
+Alice has 10 tokens and wants to send 7 tokens to Bob. In a blockchain system, this transaction is structured into **inputs** and **outputs**.
+
+### Step 1: Identifying the Input
+
+Alice owns a **previous unspent transaction output (UTXO)** worth **10 tokens**. She will use this as the input for her new transaction.
+
+| **Transaction ID** | **Output Index** | **Value** | **Owner** |
+| ------------------ | ---------------- | --------- | --------- |
+| xyz789             | 0                | 10        | Alice     |
+
+- **Transaction ID (`xyz789`)**: Identifies the transaction where Alice received the tokens.
+- **Output Index (`0`)**: Specifies which output within that transaction she is spending.
+- **Value (`10`)**: The amount available to spend.
+- **Owner (`Alice`)**: The person who can spend this output.
+
+### Step 2: Creating Outputs
+
+Alice sends **7 tokens** to Bob, but since she started with **10 tokens**, she needs to get **3 tokens** back as change.
+
+| **Value** | **Recipient**  |
+| --------- | -------------- |
+| 7         | Bob            |
+| 3         | Alice (Change) |
+
+- **Bob receives 7 tokens** in a new output.
+- **Alice gets 3 tokens back** in another output (her change).
+
+### Step 3: Structuring the Transaction
+
+| **Transaction ID** | **Inputs**              | **Outputs**        |
+| ------------------ | ----------------------- | ------------------ |
+| abc123             | ID: xyz789, OutIndex: 0 | 7 → Bob, 3 → Alice |
+
+- **Transaction ID (`abc123`)**: A unique identifier for the new transaction.
+- **Inputs**: References Alice’s previous transaction (`xyz789`).
+- **Outputs**:
+  - 7 tokens to Bob.
+  - 3 tokens returned to Alice.
 
 # To do
 
 - [ ] optimize performance given a large enough number of blocks by storing each block in its separate file
 - [ ] have a parameter to sign the PoW to allow dynamical difficulty levels
+
+```
+
+```
