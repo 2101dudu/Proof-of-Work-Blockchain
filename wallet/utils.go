@@ -8,8 +8,8 @@ import (
 
 // base 58 is similar to base 64, only that its missing the following characters:
 // 0 O l I + /
-// this was done because addresses are the main way that people send tokens to, and having characters
-// with those characters can be wrongly interpreted and misstyped
+// this was done because addresses are the main way that people send tokens to,
+// addresses with those characters can make the addresses wrongly interpreted and misstyped
 
 func base58Encode(input []byte) []byte {
 	return []byte(base58.Encode(input))
