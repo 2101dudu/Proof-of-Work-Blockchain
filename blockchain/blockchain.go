@@ -26,7 +26,7 @@ type BlockChainIterator struct {
 	Database    *badger.DB
 }
 
-// check if MANIFEST file exists, i.e., the DB
+// helper function to check if MANIFEST file exists, i.e., the DB
 func DBexists() bool {
 	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
 		return false
@@ -34,7 +34,7 @@ func DBexists() bool {
 	return true
 }
 
-// read and continue from an existing blockchain
+// fetch existing blockchain and continue the chain
 func ContinueBlockChain() *BlockChain {
 	var lastHash []byte
 
@@ -44,10 +44,10 @@ func ContinueBlockChain() *BlockChain {
 	}
 
 	opts := badger.DefaultOptions(dbPath)
-
 	db, err := badger.Open(opts)
 	Handle(err)
 
+	// fetch blockchains' last hash pointer
 	err = db.Update(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte("lh"))
 		Handle(err)
@@ -82,6 +82,7 @@ func CreateBlockChain(address string) *BlockChain {
 	db, err := badger.Open(opts)
 	Handle(err)
 
+	// set blockchains' last hash pointer
 	err = db.Update(func(txn *badger.Txn) error {
 		coinbaseTransaction := CoinbaseTx(address, genesisData)
 		genesisBlock := genesis(coinbaseTransaction)
@@ -107,6 +108,7 @@ func CreateBlockChain(address string) *BlockChain {
 func (chain *BlockChain) AddBlock(transactions []*Transaction) {
 	var lastHash []byte
 
+	// fetch blockchains' last hash pointer
 	err := chain.Database.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte("lh"))
 		Handle(err)
@@ -122,6 +124,7 @@ func (chain *BlockChain) AddBlock(transactions []*Transaction) {
 
 	newBlock := createBlock(transactions, lastHash)
 
+	// set blockchains' last hash pointer
 	err = chain.Database.Update(func(txn *badger.Txn) error {
 		err = txn.Set(newBlock.Hash, newBlock.Serialize())
 		Handle(err)
@@ -170,19 +173,23 @@ func (iter *BlockChainIterator) Next() *Block {
 func (chain *BlockChain) FindUnspentTransactions(address string) []Transaction {
 	var unspentTXs []Transaction
 
+	// create a map to track the transaction's IDs (string) whose outputs' indices (int) have been spent
 	spentTXOs := make(map[string][]int)
 
 	iter := chain.Iterator()
 
+	// iterate over the blockchain
 	for {
 		block := iter.Next()
 
+		// iterate over the block's transactions
 		for _, tx := range block.Transactions {
 			txID := hex.EncodeToString(tx.ID)
 
 		Outputs:
 			for outIdx, out := range tx.Outputs {
-				// if there's a map entry
+				// if the output that regards the address has been spent, skip to the next iteration
+				// and dont add it to the unspent transactions slice
 				if spentTXOs[txID] != nil {
 					for _, spentOut := range spentTXOs[txID] {
 						if spentOut == outIdx {
@@ -191,12 +198,15 @@ func (chain *BlockChain) FindUnspentTransactions(address string) []Transaction {
 					}
 				}
 
+				// if the code reaches this line, the blocks' output has not been spend
+				// if the output regards the address in question, add the transaction to the slice
 				if out.canBeUnlocked(address) {
 					unspentTXs = append(unspentTXs, *tx)
 				}
 			}
 
 			if !tx.isCoinbase() {
+				// add inputs rerding the address to the slice of spend tokens
 				for _, in := range tx.Inputs {
 					if in.canUnlock(address) {
 						inTxID := hex.EncodeToString(in.ID)
@@ -205,7 +215,6 @@ func (chain *BlockChain) FindUnspentTransactions(address string) []Transaction {
 				}
 			}
 		}
-
 		// genesis block reached
 		if len(block.PrevHash) == 0 {
 			break
@@ -220,6 +229,7 @@ func (chain *BlockChain) FindUTXO(address string) []TransactionOutput {
 	var UTXOs []TransactionOutput
 	unspentTransactions := chain.FindUnspentTransactions(address)
 
+	// only retrieve the unspent outputs
 	for _, tx := range unspentTransactions {
 		for _, out := range tx.Outputs {
 			if out.canBeUnlocked(address) {
@@ -231,12 +241,12 @@ func (chain *BlockChain) FindUTXO(address string) []TransactionOutput {
 	return UTXOs
 }
 
+// retrieve amount of tokens aswell as the transactions' IDs whose outputs concern the address' recipient
 func (chain *BlockChain) FindSpendableOutputs(address string, amountToSend int) (int, map[string][]int) {
 	unspentOutputs := make(map[string][]int)
 	unspentTransactions := chain.FindUnspentTransactions(address)
 	accumulated := 0
 
-	// ensure the sender has enough tokens to spend, i.e., avaiableTokens >= amountToSend
 Work:
 	for _, tx := range unspentTransactions {
 		txID := hex.EncodeToString(tx.ID)

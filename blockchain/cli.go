@@ -15,7 +15,7 @@ func (cli *CommandLine) printUsage() {
 	fmt.Println("   getbalance -address ADDRESS —— get the balance for the given ADDRESS")
 	fmt.Println("   createblockchain -address ADDRESS —— create a fresh blockchain and have the ADDRESS mine the genesis block")
 	fmt.Println("   send -from FROM -to TO -amount AMONUT —— send AMOUNT tokens to TO from FROM")
-	fmt.Println("   printblockchain —— prints the blocks in the blockchain")
+	fmt.Println("   printchain —— prints the blocks in the blockchain")
 }
 
 func (cli *CommandLine) getBalance(address string) {

@@ -7,12 +7,13 @@ import (
 )
 
 type Block struct {
-	Hash         []byte // a hash of the Data + PrevHash
-	Transactions []*Transaction
-	PrevHash     []byte // linked list functionality (chain)
+	Hash         []byte         // a hash of the Data + PrevHash
+	Transactions []*Transaction // the data of a block
+	PrevHash     []byte         // linked list functionality (chain)
 	Nonce        int
 }
 
+// helper function to hash the blocks' transactions
 func (b *Block) HashTransactions() []byte {
 	var txHashes [][]byte
 	var txHash [32]byte
@@ -26,10 +27,9 @@ func (b *Block) HashTransactions() []byte {
 }
 
 // create a new instance of block with the given parameters
-// create block now actually needs to be calculated and have a proof of work
 func createBlock(transactions []*Transaction, prevHash []byte) *Block {
 	block := &Block{[]byte{}, transactions, prevHash, 0}
-	pow := NewProof(block)
+	pow := NewProof(block) // proove block's creation
 	nonce, hash := pow.Run()
 
 	block.Hash = hash[:]
