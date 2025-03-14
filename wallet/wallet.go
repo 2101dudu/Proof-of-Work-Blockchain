@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -82,16 +83,26 @@ func (w *Wallet) UnmarshalJSON(data []byte) error {
 }
 
 func (w Wallet) address() []byte {
-	publicKeyHashed := publicKeyHash(w.PublicKey)
+	publicKeyHashed := PublicKeyHash(w.PublicKey)
 
 	versionedHash := append([]byte{version}, publicKeyHashed...)
 	checksum := generateChecksum(versionedHash)
 
 	fullHash := append(versionedHash, checksum...)
 
-	address := base58Encode(fullHash)
+	address := Base58Encode(fullHash)
 
 	return address
+}
+
+func ValidateAddress(address string) bool {
+	publicKeyHash := Base58Decode([]byte(address))
+	version := publicKeyHash[0]
+	actualChecksum := publicKeyHash[len(publicKeyHash)-checksumLength:]
+
+	targetChecksum := generateChecksum(append([]byte{version}, publicKeyHash...))
+
+	return bytes.Compare(actualChecksum, targetChecksum) == 0
 }
 
 func newKeyPair() (ecdsa.PrivateKey, []byte) {
@@ -113,7 +124,7 @@ func MakeWallet() *Wallet {
 	return &Wallet{PrivateKey: privateKey, PublicKey: publicKey}
 }
 
-func publicKeyHash(publicKey []byte) []byte {
+func PublicKeyHash(publicKey []byte) []byte {
 	publicKeyHashed := sha256.Sum256(publicKey)
 
 	hasher := ripemd160.New()

@@ -1,7 +1,10 @@
 package blockchain
 
 import (
+	"bytes"
+	"crypto/ecdsa"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -170,7 +173,7 @@ func (iter *BlockChainIterator) Next() *Block {
 }
 
 // locate the unspent transaction
-func (chain *BlockChain) FindUnspentTransactions(address string) []Transaction {
+func (chain *BlockChain) FindUnspentTransactions(publicKeyHash []byte) []Transaction {
 	var unspentTXs []Transaction
 
 	// create a map to track the transaction's IDs (string) whose outputs' indices (int) have been spent
@@ -200,15 +203,15 @@ func (chain *BlockChain) FindUnspentTransactions(address string) []Transaction {
 
 				// if the code reaches this line, the blocks' output has not been spend
 				// if the output regards the address in question, add the transaction to the slice
-				if out.canBeUnlocked(address) {
+				if out.isLockedWithKey(publicKeyHash) {
 					unspentTXs = append(unspentTXs, *tx)
 				}
 			}
 
 			if !tx.isCoinbase() {
-				// add inputs rerding the address to the slice of spend tokens
+				// add inputs regarding the address to the slice of spend tokens
 				for _, in := range tx.Inputs {
-					if in.canUnlock(address) {
+					if in.usesKey(publicKeyHash) {
 						inTxID := hex.EncodeToString(in.ID)
 						spentTXOs[inTxID] = append(spentTXOs[inTxID], in.Output)
 					}
@@ -225,14 +228,14 @@ func (chain *BlockChain) FindUnspentTransactions(address string) []Transaction {
 }
 
 // locate the unspent transaction outputs (UTXOs)
-func (chain *BlockChain) FindUTXO(address string) []TransactionOutput {
+func (chain *BlockChain) FindUTXO(publicKeyHash []byte) []TransactionOutput {
 	var UTXOs []TransactionOutput
-	unspentTransactions := chain.FindUnspentTransactions(address)
+	unspentTransactions := chain.FindUnspentTransactions(publicKeyHash)
 
 	// only retrieve the unspent outputs
 	for _, tx := range unspentTransactions {
 		for _, out := range tx.Outputs {
-			if out.canBeUnlocked(address) {
+			if out.isLockedWithKey(publicKeyHash) {
 				UTXOs = append(UTXOs, out)
 			}
 		}
@@ -242,9 +245,9 @@ func (chain *BlockChain) FindUTXO(address string) []TransactionOutput {
 }
 
 // retrieve amount of tokens aswell as the transactions' IDs whose outputs concern the address' recipient
-func (chain *BlockChain) FindSpendableOutputs(address string, amountToSend int) (int, map[string][]int) {
+func (chain *BlockChain) FindSpendableOutputs(publicKeyHash []byte, amountToSend int) (int, map[string][]int) {
 	unspentOutputs := make(map[string][]int)
-	unspentTransactions := chain.FindUnspentTransactions(address)
+	unspentTransactions := chain.FindUnspentTransactions(publicKeyHash)
 	accumulated := 0
 
 Work:
@@ -252,7 +255,7 @@ Work:
 		txID := hex.EncodeToString(tx.ID)
 
 		for outIdx, out := range tx.Outputs {
-			if out.canBeUnlocked(address) && accumulated < amountToSend {
+			if out.isLockedWithKey(publicKeyHash) && accumulated < amountToSend {
 				accumulated += out.Value
 				unspentOutputs[txID] = append(unspentOutputs[txID], outIdx)
 
@@ -264,4 +267,48 @@ Work:
 	}
 
 	return accumulated, unspentOutputs
+}
+
+func (chain *BlockChain) FindTransaction(ID []byte) (Transaction, error) {
+	iter := chain.Iterator()
+
+	for {
+		block := iter.Next()
+
+		for _, tx := range block.Transactions {
+			if bytes.Compare(tx.ID, ID) == 0 {
+				return *tx, nil
+			}
+		}
+
+		if len(block.PrevHash) == 0 {
+			break
+		}
+	}
+
+	return Transaction{}, errors.New("Transaction does not exist")
+}
+
+func (chain *BlockChain) SignTransaction(tx *Transaction, privateKey ecdsa.PrivateKey) {
+	previousTXs := make(map[string]Transaction)
+
+	for _, in := range tx.Inputs {
+		previousTX, err := chain.FindTransaction(in.ID)
+		Handle(err)
+		previousTXs[hex.EncodeToString(previousTX.ID)] = previousTX
+	}
+
+	tx.sign(privateKey, previousTXs)
+}
+
+func (chain *BlockChain) VerifyTransaction(tx *Transaction) bool {
+	previousTXs := make(map[string]Transaction)
+
+	for _, in := range tx.Inputs {
+		previousTX, err := chain.FindTransaction(in.ID)
+		Handle(err)
+		previousTXs[hex.EncodeToString(previousTX.ID)] = previousTX
+	}
+
+	return tx.Verify(previousTXs)
 }
