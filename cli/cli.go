@@ -3,6 +3,7 @@ package cli
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"runtime"
 	"strconv"
@@ -24,11 +25,17 @@ func (cli *CommandLine) printUsage() {
 }
 
 func (cli *CommandLine) getBalance(address string) {
+	if !wallet.ValidateAddress(address) {
+		log.Panic("Address is invalid")
+	}
+
 	chain := blockchain.ContinueBlockChain()
 	defer chain.Database.Close()
 
 	amount := 0
-	UTXOs := chain.FindUTXO(address)
+	publicKeyHash := wallet.Base58Decode([]byte(address))
+	publicKeyHash = publicKeyHash[1 : len(publicKeyHash)-4]
+	UTXOs := chain.FindUTXO(publicKeyHash)
 
 	for _, UTXO := range UTXOs {
 		amount += UTXO.Value
@@ -40,12 +47,24 @@ func (cli *CommandLine) getBalance(address string) {
 }
 
 func (cli *CommandLine) createBlockChain(address string) {
+	if !wallet.ValidateAddress(address) {
+		log.Panic("Address is invalid")
+	}
+
 	chain := blockchain.CreateBlockChain(address)
 	chain.Database.Close()
 	fmt.Println("blockchain created!")
 }
 
 func (cli *CommandLine) send(from, to string, amount int) {
+	if !wallet.ValidateAddress(from) {
+		log.Panic("Address is invalid")
+	}
+
+	if !wallet.ValidateAddress(to) {
+		log.Panic("Address is invalid")
+	}
+
 	chain := blockchain.ContinueBlockChain()
 	defer chain.Database.Close()
 
@@ -69,6 +88,9 @@ func (cli *CommandLine) printChain() {
 
 		pow := blockchain.NewProof(block)
 		fmt.Printf("Proof-of-work: %s\n", strconv.FormatBool(pow.Validate()))
+		for _, tx := range block.Transactions {
+			fmt.Println(tx)
+		}
 		fmt.Printf("--------\n")
 
 		// traversed the whole chain and reached the genesis block with hash = 0

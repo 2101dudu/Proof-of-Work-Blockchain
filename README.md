@@ -396,6 +396,39 @@ Base 58 is similar to base 64, only that its missing the characters `0 O l I + /
 
 As of writing, I'm yet to integrate the wallets' functionalities to the blockchain. So, for now, they do the exact same thing as conventional strings. :)
 
+# Digital Signatures
+
+Digital signatures are a crucial component of a blockchain. They ensure the authenticity and integrity of our transactions.
+
+## What go in to these Digital Signatures?
+
+A digital signature is a mechanism that allows someone to verify that a transaction was indeed created by the owner of the private key associated with the sender's address.  
+Here's a simple example of how transaction signing works:
+
+| Step                 | Description                                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Transaction Creation | **Alice** wants to send 5 tokens to **Bob**. She creates a transaction and signs it with her _private key_.   |
+| Signature Generation | The signature is generated using Alice's _private key_ and the transaction data.                              |
+| Broadcasting         | Alice broadcasts the signed transaction to the network.                                                       |
+| Verification         | Nodes use Alice's _public key_ to verify the signature. If valid, the transaction is added to the blockchain. |
+
+Alice uses her private key to create a signature that can only be verified using her public key, proving she authorized the transaction.
+
+### Can't someone just fake their identity?
+
+No - this is where the cryptographic magic of public/private key pairs comes in. Even if someone has Alice's public key and can see her transactions, they cannot create valid signatures without her private key. If someone gets access to your private key, they can create valid signatures and essentially steal your identity on the blockchain. This is also why our wallet implementation carefully manages private keys and never exposes them.
+
+Looking at our code, you can see this security in action:
+
+- The `Wallet` struct keeps the private key secure internally
+- `newKeyPair()` generates the cryptographic key pair using secure random numbers
+- `sign()` uses the private key to create signatures that can be verified with `Verify()`
+- The actual signing uses **ECDSA** (_Elliptic Curve Digital Signature Algorithm_) which provides strong cryptographic guarantees
+
+### How can someone be sure that a transaction is acutally mine?
+
+The verification process ties all of this together. When someone receives your transaction, they can mathematically verify it came from you by checking that the signature matches your public key. Our `Verify()` method implements this check using ECDSA, making it impossible for anyone without your private key to create valid transactions. This creates a secure, trustless system where authenticity can be verified by anyone.
+
 # To do
 
 - [ ] optimize performance given a large enough number of blocks by storing each block in its separate file

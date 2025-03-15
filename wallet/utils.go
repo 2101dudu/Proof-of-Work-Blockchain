@@ -11,11 +11,11 @@ import (
 // this was done because addresses are the main way that people send tokens to,
 // addresses with those characters can make the addresses wrongly interpreted and misstyped
 
-func base58Encode(input []byte) []byte {
+func Base58Encode(input []byte) []byte {
 	return []byte(base58.Encode(input))
 }
 
-func base58Decode(input []byte) []byte {
+func Base58Decode(input []byte) []byte {
 	decode, err := base58.Decode(string(input))
 	if err != nil {
 		log.Panic(err)
