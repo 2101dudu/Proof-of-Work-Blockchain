@@ -76,7 +76,8 @@ func (cli *CommandLine) send(from, to string, amount int) {
 	defer chain.Database.Close()
 
 	t := blockchain.NewTransaction(from, to, amount, &UTXOSet)
-	block := chain.AddBlock([]*blockchain.Transaction{t})
+	coinbaseTx := blockchain.CoinbaseTx(from, "") // make the sender/creator of the transaction receive the coinbase transaction payout
+	block := chain.AddBlock([]*blockchain.Transaction{coinbaseTx, t})
 	UTXOSet.Update(block)
 
 	fmt.Printf("Sent %d tokens to %s\n", amount, to)
