@@ -269,6 +269,7 @@ Work:
 	return accumulated, unspentOutputs
 }
 
+// locate a transaction by its ID
 func (chain *BlockChain) FindTransaction(ID []byte) (Transaction, error) {
 	iter := chain.Iterator()
 
@@ -289,26 +290,32 @@ func (chain *BlockChain) FindTransaction(ID []byte) (Transaction, error) {
 	return Transaction{}, errors.New("Transaction does not exist")
 }
 
+// sign a transaction using the private key
 func (chain *BlockChain) SignTransaction(tx *Transaction, privateKey ecdsa.PrivateKey) {
 	previousTXs := make(map[string]Transaction)
 
+	// locate every previous transaction that is referenced by the input
 	for _, in := range tx.Inputs {
 		previousTX, err := chain.FindTransaction(in.ID)
 		Handle(err)
 		previousTXs[hex.EncodeToString(previousTX.ID)] = previousTX
 	}
 
+	// sign the previous transactions using the private key
 	tx.sign(privateKey, previousTXs)
 }
 
+// verify a transaction using the public key
 func (chain *BlockChain) VerifyTransaction(tx *Transaction) bool {
 	previousTXs := make(map[string]Transaction)
 
+	// locate every previous transaction that is referenced by the input
 	for _, in := range tx.Inputs {
 		previousTX, err := chain.FindTransaction(in.ID)
 		Handle(err)
 		previousTXs[hex.EncodeToString(previousTX.ID)] = previousTX
 	}
 
+	// verify the transaction
 	return tx.Verify(previousTXs)
 }

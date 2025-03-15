@@ -95,13 +95,36 @@ func (w Wallet) address() []byte {
 	return address
 }
 
+// Address: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+// convert into a full hash
+// Full hash: 00248bd9e7a51b7dd07aba9766a7c62d50207902802bc6c767
+// extract the components
+// [Version] 00
+// [PublicKeyHash] 248bd9e7a51b7dd07aba9766a7c62d5020790280
+// [Checksum] 2bc6c767
+//
+// ValidateAddress checks if a given address is valid by:
+// 1. Decoding the Base58 address to get the full hash
+// 2. Extracting the version byte and actual checksum
+// 3. Generating a checksum from the version and public key hash
+// 4. Comparing the actual and generated checksums
 func ValidateAddress(address string) bool {
+	// decode the Base58 address back into the full hash
 	publicKeyHash := Base58Decode([]byte(address))
-	version := publicKeyHash[0]
+
+	// extract the actual checksum (last 4 bytes)
 	actualChecksum := publicKeyHash[len(publicKeyHash)-checksumLength:]
 
+	// extract the version byte (first byte)
+	version := publicKeyHash[0]
+
+	// extract the public key hash (between the version and checksum)
+	publicKeyHash = publicKeyHash[1 : len(publicKeyHash)-checksumLength]
+
+	// generate checksum from version + public key hash
 	targetChecksum := generateChecksum(append([]byte{version}, publicKeyHash...))
 
+	// compare the actual and generated checksums
 	return bytes.Compare(actualChecksum, targetChecksum) == 0
 }
 

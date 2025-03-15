@@ -19,12 +19,15 @@ type TransactionOutput struct {
 
 func NewTransactionOutput(value int, address string) *TransactionOutput {
 	txOut := &TransactionOutput{value, nil}
+
+	// lock the output to the address by parameterizing the public key hash
 	txOut.lock([]byte(address))
 
 	return txOut
 }
 
 func (in *TransactionInput) usesKey(publicKeyHash []byte) bool {
+	// get the public key hash from the public key
 	lockingHash := wallet.PublicKeyHash(in.PublicKey)
 
 	return bytes.Compare(publicKeyHash, lockingHash) == 0
@@ -33,11 +36,12 @@ func (in *TransactionInput) usesKey(publicKeyHash []byte) bool {
 func (out *TransactionOutput) lock(address []byte) {
 	publicKeyHash := wallet.Base58Decode(address)
 
-	//remove version and checksum
+	// remove version and checksum
 	publicKeyHash = publicKeyHash[1 : len(publicKeyHash)-4]
 	out.PublicKeyHash = publicKeyHash
 }
 
+// check if the output is locked with the given public key hash
 func (out *TransactionOutput) isLockedWithKey(publicKeyHash []byte) bool {
 	return bytes.Compare(out.PublicKeyHash, publicKeyHash) == 0
 }
