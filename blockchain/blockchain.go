@@ -55,9 +55,9 @@ func ContinueBlockChain() *BlockChain {
 		item, err := txn.Get([]byte("lh"))
 		Handle(err)
 
-		err = item.Value(func(val []byte) error {
+		err = item.Value(func(v []byte) error {
 			// this func with val would only be called if item.Value() encounters no error.
-			lastHash = slices.Clone(val)
+			lastHash = slices.Clone(v)
 			return nil
 		})
 
@@ -108,7 +108,7 @@ func CreateBlockChain(address string) *BlockChain {
 }
 
 // create and append a new bock to the list of existing blocks
-func (chain *BlockChain) AddBlock(transactions []*Transaction) {
+func (chain *BlockChain) AddBlock(transactions []*Transaction) *Block {
 	var lastHash []byte
 
 	// fetch blockchains' last hash pointer
@@ -116,9 +116,9 @@ func (chain *BlockChain) AddBlock(transactions []*Transaction) {
 		item, err := txn.Get([]byte("lh"))
 		Handle(err)
 
-		err = item.Value(func(val []byte) error {
+		err = item.Value(func(v []byte) error {
 			// this func with val would only be called if item.Value() encounters no error.
-			lastHash = slices.Clone(val)
+			lastHash = slices.Clone(v)
 			return nil
 		})
 
@@ -139,6 +139,8 @@ func (chain *BlockChain) AddBlock(transactions []*Transaction) {
 	})
 
 	Handle(err)
+
+	return newBlock
 }
 
 func (chain *BlockChain) Iterator() *BlockChainIterator {
@@ -154,8 +156,8 @@ func (iter *BlockChainIterator) Next() *Block {
 		Handle(err)
 		var blockData []byte
 
-		err = item.Value(func(val []byte) error {
-			blockData = slices.Clone(val)
+		err = item.Value(func(v []byte) error {
+			blockData = slices.Clone(v)
 
 			return nil
 		})
@@ -173,8 +175,8 @@ func (iter *BlockChainIterator) Next() *Block {
 }
 
 // locate the unspent transaction
-func (chain *BlockChain) FindUnspentTransactions(publicKeyHash []byte) []Transaction {
-	var unspentTXs []Transaction
+func (chain *BlockChain) FindUnspentTransactions() map[string]TransactionOutputs {
+	UTXO := make(map[string]TransactionOutputs)
 
 	// create a map to track the transaction's IDs (string) whose outputs' indices (int) have been spent
 	spentTXOs := make(map[string][]int)
@@ -191,7 +193,7 @@ func (chain *BlockChain) FindUnspentTransactions(publicKeyHash []byte) []Transac
 
 		Outputs:
 			for outIdx, out := range tx.Outputs {
-				// if the output that regards the address has been spent, skip to the next iteration
+				// if the output that has been spent, skip to the next iteration
 				// and dont add it to the unspent transactions slice
 				if spentTXOs[txID] != nil {
 					for _, spentOut := range spentTXOs[txID] {
@@ -201,20 +203,15 @@ func (chain *BlockChain) FindUnspentTransactions(publicKeyHash []byte) []Transac
 					}
 				}
 
-				// if the code reaches this line, the blocks' output has not been spend
-				// if the output regards the address in question, add the transaction to the slice
-				if out.isLockedWithKey(publicKeyHash) {
-					unspentTXs = append(unspentTXs, *tx)
-				}
+				outs := UTXO[txID]
+				outs.Outputs = append(outs.Outputs, out)
+				UTXO[txID] = outs
 			}
 
 			if !tx.isCoinbase() {
-				// add inputs regarding the address to the slice of spend tokens
 				for _, in := range tx.Inputs {
-					if in.usesKey(publicKeyHash) {
-						inTxID := hex.EncodeToString(in.ID)
-						spentTXOs[inTxID] = append(spentTXOs[inTxID], in.Output)
-					}
+					inTxID := hex.EncodeToString(in.ID)
+					spentTXOs[inTxID] = append(spentTXOs[inTxID], in.Output)
 				}
 			}
 		}
@@ -224,49 +221,7 @@ func (chain *BlockChain) FindUnspentTransactions(publicKeyHash []byte) []Transac
 		}
 	}
 
-	return unspentTXs
-}
-
-// locate the unspent transaction outputs (UTXOs)
-func (chain *BlockChain) FindUTXO(publicKeyHash []byte) []TransactionOutput {
-	var UTXOs []TransactionOutput
-	unspentTransactions := chain.FindUnspentTransactions(publicKeyHash)
-
-	// only retrieve the unspent outputs
-	for _, tx := range unspentTransactions {
-		for _, out := range tx.Outputs {
-			if out.isLockedWithKey(publicKeyHash) {
-				UTXOs = append(UTXOs, out)
-			}
-		}
-	}
-
-	return UTXOs
-}
-
-// retrieve amount of tokens aswell as the transactions' IDs whose outputs concern the address' recipient
-func (chain *BlockChain) FindSpendableOutputs(publicKeyHash []byte, amountToSend int) (int, map[string][]int) {
-	unspentOutputs := make(map[string][]int)
-	unspentTransactions := chain.FindUnspentTransactions(publicKeyHash)
-	accumulated := 0
-
-Work:
-	for _, tx := range unspentTransactions {
-		txID := hex.EncodeToString(tx.ID)
-
-		for outIdx, out := range tx.Outputs {
-			if out.isLockedWithKey(publicKeyHash) && accumulated < amountToSend {
-				accumulated += out.Value
-				unspentOutputs[txID] = append(unspentOutputs[txID], outIdx)
-
-				if accumulated >= amountToSend {
-					break Work
-				}
-			}
-		}
-	}
-
-	return accumulated, unspentOutputs
+	return UTXO
 }
 
 // locate a transaction by its ID
