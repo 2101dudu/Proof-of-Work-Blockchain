@@ -1,16 +1,16 @@
 {
   "wallets": {
-    "1FwWVwYS6rqjtpKaGbWSEC4pVNZj2DDAvn": {
-      "d": "a8863930b463d5f14cf5436d13d7e2bafed6c789ed9f1d78ce00c844934eaa33",
-      "publicKeyX": "57d8318f1e021005d39355ecef906eecd2f94fdeb6f42f621b75ca613627e18c",
-      "publicKeyY": "6715e5f87a872c018871e17482986b26228c79acc1ae8869a0af4650d94493ba",
-      "rawPublicKey": "57d8318f1e021005d39355ecef906eecd2f94fdeb6f42f621b75ca613627e18c6715e5f87a872c018871e17482986b26228c79acc1ae8869a0af4650d94493ba"
+    "18yfSePJT2FGTj43mPabdQ2faPhUVoFy7m": {
+      "d": "5ad2b294685ff63937712057b380d421c6f055523de60472c8c7e97f527cc67c",
+      "publicKeyX": "8ad5dfa89751e698bc16c86fe9e2a23005f9c67a6e04bc313df9473c2c6e8383",
+      "publicKeyY": "d5b4c3e4a5e3d9f1d063dfa6b4b60e926dd4a2563691e19af8a075a6137c5baa",
+      "rawPublicKey": "8ad5dfa89751e698bc16c86fe9e2a23005f9c67a6e04bc313df9473c2c6e8383d5b4c3e4a5e3d9f1d063dfa6b4b60e926dd4a2563691e19af8a075a6137c5baa"
     },
-    "1Q1JrtK5dhRdXnQamc1kCspFYo6kwxztf5": {
-      "d": "a8904f492cce17e4d104c503dd8d12d4c97c2981388f7c18ab674d6cd3283000",
-      "publicKeyX": "1ff01787af54927c7c96819d402487d5adfbc2a70dfbde0dd243cff0cfcd3e7a",
-      "publicKeyY": "fc53369450bed33d889e9f84fc8128b9d428879609a556ba0f1b1b7782b6ab3",
-      "rawPublicKey": "1ff01787af54927c7c96819d402487d5adfbc2a70dfbde0dd243cff0cfcd3e7a0fc53369450bed33d889e9f84fc8128b9d428879609a556ba0f1b1b7782b6ab3"
+    "1KGv4HCNwC94inpe7w2fMiHEXxUVzbL58z": {
+      "d": "1f2eabd7ac618c04e2bc1e63d8ace85993f115f0e3ba5f037bb7929d24fbd80c",
+      "publicKeyX": "d98f99a3b1425fa6936abe75d646137d8291bae01e99f0979897e3a4c0fcbbfc",
+      "publicKeyY": "1f4abec971dcecd4b16c1cdd1d0c01888722ba85aa7d74a036930b18ab5fd95",
+      "rawPublicKey": "d98f99a3b1425fa6936abe75d646137d8291bae01e99f0979897e3a4c0fcbbfc01f4abec971dcecd4b16c1cdd1d0c01888722ba85aa7d74a036930b18ab5fd95"
     }
   }
 }

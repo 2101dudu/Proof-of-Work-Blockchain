@@ -22,6 +22,7 @@ func (cli *CommandLine) printUsage() {
 	fmt.Println("   printchain —— prints the blocks in the blockchain")
 	fmt.Println("   createwallet —— create a new wallet")
 	fmt.Println("   listaddresses —— list the addresses in the wallet file")
+	fmt.Println("   reindexutxo —— rebuild the UTXO set")
 }
 
 func (cli *CommandLine) getBalance(address string) {
@@ -30,12 +31,13 @@ func (cli *CommandLine) getBalance(address string) {
 	}
 
 	chain := blockchain.ContinueBlockChain()
+	UTXOSet := blockchain.UTXOSet{Blockchain: chain}
 	defer chain.Database.Close()
 
 	amount := 0
 	publicKeyHash := wallet.Base58Decode([]byte(address))
 	publicKeyHash = publicKeyHash[1 : len(publicKeyHash)-4]
-	UTXOs := chain.FindUTXO(publicKeyHash)
+	UTXOs := UTXOSet.FindUTXO(publicKeyHash)
 
 	for _, UTXO := range UTXOs {
 		amount += UTXO.Value
@@ -53,6 +55,10 @@ func (cli *CommandLine) createBlockChain(address string) {
 
 	chain := blockchain.CreateBlockChain(address)
 	chain.Database.Close()
+
+	UTXOSet := blockchain.UTXOSet{Blockchain: chain}
+	UTXOSet.Reindex()
+
 	fmt.Println("blockchain created!")
 }
 
@@ -66,10 +72,12 @@ func (cli *CommandLine) send(from, to string, amount int) {
 	}
 
 	chain := blockchain.ContinueBlockChain()
+	UTXOSet := blockchain.UTXOSet{Blockchain: chain}
 	defer chain.Database.Close()
 
-	t := blockchain.NewTransaction(from, to, amount, chain)
-	chain.AddBlock([]*blockchain.Transaction{t})
+	t := blockchain.NewTransaction(from, to, amount, &UTXOSet)
+	block := chain.AddBlock([]*blockchain.Transaction{t})
+	UTXOSet.Update(block)
 
 	fmt.Printf("Sent %d tokens to %s\n", amount, to)
 }
@@ -117,6 +125,17 @@ func (cli *CommandLine) listAddresses() {
 	}
 }
 
+func (cli *CommandLine) reindexUTXO() {
+	chain := blockchain.ContinueBlockChain()
+	defer chain.Database.Close()
+
+	UTXOSet := blockchain.UTXOSet{Blockchain: chain}
+	UTXOSet.Reindex()
+
+	count := UTXOSet.CountTransactions()
+	fmt.Printf("Done! There are now %d transactions in the UTXO set.\n", count)
+}
+
 func (cli *CommandLine) validateArgs() {
 	if len(os.Args) < 2 {
 		cli.printUsage()
@@ -133,6 +152,7 @@ func (cli *CommandLine) Run() {
 	printChainCmd := flag.NewFlagSet("printchain", flag.ExitOnError)
 	createwalletcmd := flag.NewFlagSet("createwallet", flag.ExitOnError)
 	listaddressescmd := flag.NewFlagSet("listaddresses", flag.ExitOnError)
+	reeindexUTXOcmd := flag.NewFlagSet("reindexutxo", flag.ExitOnError)
 
 	getBalanceAddresss := getBalanceCmd.String("address", "", "The address of the account you want to check the balance on")
 	createBlockChainAddress := createBlockChainCmd.String("address", "", "The address of the account who will mine the genesis block")
@@ -158,6 +178,9 @@ func (cli *CommandLine) Run() {
 		blockchain.Handle(err)
 	case "listaddresses":
 		err := listaddressescmd.Parse(os.Args[2:])
+		blockchain.Handle(err)
+	case "reindexutxo":
+		err := reeindexUTXOcmd.Parse(os.Args[2:])
 		blockchain.Handle(err)
 	default:
 		cli.printUsage()
@@ -198,5 +221,9 @@ func (cli *CommandLine) Run() {
 
 	if listaddressescmd.Parsed() {
 		cli.listAddresses()
+	}
+
+	if reeindexUTXOcmd.Parsed() {
+		cli.reindexUTXO()
 	}
 }

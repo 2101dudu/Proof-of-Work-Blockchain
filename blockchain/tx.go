@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"bytes"
+	"encoding/gob"
 	"golang-blockchain/wallet"
 )
 
@@ -15,6 +16,10 @@ type TransactionInput struct {
 type TransactionOutput struct {
 	Value         int    // token amount
 	PublicKeyHash []byte // the hashed recepient's address
+}
+
+type TransactionOutputs struct {
+	Outputs []TransactionOutput
 }
 
 func NewTransactionOutput(value int, address string) *TransactionOutput {
@@ -44,4 +49,24 @@ func (out *TransactionOutput) lock(address []byte) {
 // check if the output is locked with the given public key hash
 func (out *TransactionOutput) isLockedWithKey(publicKeyHash []byte) bool {
 	return bytes.Compare(out.PublicKeyHash, publicKeyHash) == 0
+}
+
+func (outs TransactionOutputs) Serialize() []byte {
+	var buffer bytes.Buffer
+
+	encode := gob.NewEncoder(&buffer)
+	err := encode.Encode(outs)
+	Handle(err)
+
+	return buffer.Bytes()
+}
+
+func DeserializeOutputs(data []byte) TransactionOutputs {
+	var outputs TransactionOutputs
+
+	decode := gob.NewDecoder(bytes.NewReader(data))
+	err := decode.Decode(&outputs)
+	Handle(err)
+
+	return outputs
 }

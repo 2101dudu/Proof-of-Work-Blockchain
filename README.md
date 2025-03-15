@@ -429,6 +429,21 @@ Looking at our code, you can see this security in action:
 
 The verification process ties all of this together. When someone receives your transaction, they can mathematically verify it came from you by checking that the signature matches your public key. Our `Verify()` method implements this check using ECDSA, making it impossible for anyone without your private key to create valid transactions. This creates a secure, trustless system where authenticity can be verified by anyone.
 
+# Creating a UTXOs persistence layer
+
+As our blockchain grows, the need for efficient transaction validation becomes paramount. Previously, our blockchain iterated over all transactions to find unspent outputs, which was computationally expensive and time-consuming. By introducing a UTXO persistence layer, we can significantly optimize the speed of lookups and transaction validations.
+
+## How It Works
+
+The UTXO persistence layer stores UTXOs in a dedicated database, allowing for quick access and updates. This approach reduces the need to traverse the entire blockchain for each transaction, thus enhancing performance.
+
+- Storage: UTXOs are stored in a key-value database, where the key is the transaction ID and the value is a list of unspent outputs.
+- Updates: When a transaction is processed, the UTXO set is updated to reflect the consumed and newly created outputs.
+
+## Fun Fact
+
+Whilst studying this, I learned that the Bitcoin blockchain, which also uses a UTXO model, occupies only around **200GB**!? This is a banger of a testament to the efficiency of the UTXO model in managing large volumes of transactions.
+
 # To do
 
 - [ ] optimize performance given a large enough number of blocks by storing each block in its separate file
