@@ -49,31 +49,21 @@ func (tx *Transaction) hash() []byte {
 	return hash[:]
 }
 
-// hash the transaction's bytes
-func (tx *Transaction) setID() {
-	var encoded bytes.Buffer
-	var hash [32]byte
-
-	encode := gob.NewEncoder(&encoded)
-	err := encode.Encode(tx)
-	Handle(err)
-
-	hash = sha256.Sum256(encoded.Bytes())
-	tx.ID = hash[:]
-}
-
 // create the blockchains' first transaction — the coinbase transaction
 // the coinbase includes a reward that's given to the first recepient, in this case, 100 tokens
 func CoinbaseTx(to, data string) *Transaction {
 	if data == "" {
-		data = fmt.Sprintf("Coins to %s", to) // arbitraty data
+		randData := make([]byte, 24)
+		_, err := rand.Read(randData)
+		Handle(err)
+		data = fmt.Sprintf("%x", randData)
 	}
 
 	txInput := TransactionInput{[]byte{}, -1, nil, []byte(data)}
-	txOutput := NewTransactionOutput(100, to) // a reward of 100 tokens for the first miner
+	txOutput := NewTransactionOutput(20, to) // a reward of 20 tokens for the first miner
 
 	tx := Transaction{nil, []TransactionInput{txInput}, []TransactionOutput{*txOutput}}
-	tx.setID()
+	tx.ID = tx.hash()
 
 	return &tx
 }
