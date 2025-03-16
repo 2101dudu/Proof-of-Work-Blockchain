@@ -44,7 +44,8 @@ func ContinueBlockChain(nodeId string) *BlockChain {
 
 	var lastHash []byte
 
-	opts := badger.DefaultOptions(dbPath)
+	opts := badger.DefaultOptions(path)
+	opts.ValueDir = path
 	db, err := openDB(path, opts)
 	Handle(err)
 
@@ -79,7 +80,8 @@ func CreateBlockChain(address, nodeId string) *BlockChain {
 
 	var lastHash []byte
 
-	opts := badger.DefaultOptions(dbPath)
+	opts := badger.DefaultOptions(path)
+	opts.ValueDir = path
 	db, err := openDB(path, opts)
 	Handle(err)
 
@@ -188,6 +190,7 @@ func (chain *BlockChain) MineBlock(transactions []*Transaction) *Block {
 	})
 
 	newBlock := createBlock(transactions, lastHash, lastHeight+1)
+	fmt.Println("lastheight is", lastHeight+1)
 
 	// set blockchains' last hash pointer
 	err = chain.Database.Update(func(txn *badger.Txn) error {
@@ -392,11 +395,11 @@ func retry(dir string, originalOpts badger.Options) (*badger.DB, error) {
 func openDB(dir string, opts badger.Options) (*badger.DB, error) {
 	if db, err := badger.Open(opts); err != nil {
 		if strings.Contains(err.Error(), "LOCK") {
-			if db, err := retry(dir, opts); err != nil {
-				log.Println("Database unlocked, value log truncated")
+			if db, err := retry(dir, opts); err == nil {
+				log.Println("database unlocked, value log truncated")
 				return db, nil
 			}
-			log.Println("Could not unlock database:", err)
+			log.Println("could not unlock database:", err)
 		}
 		return nil, err
 	} else {

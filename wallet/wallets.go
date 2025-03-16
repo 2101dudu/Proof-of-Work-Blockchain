@@ -23,7 +23,7 @@ func CreateWallets(nodeId string) (*Wallets, error) {
 
 func (wallets *Wallets) AddWallet() string {
 	wallet := MakeWallet()
-	address := fmt.Sprintf("%s", wallet.address())
+	address := fmt.Sprintf("%s", wallet.Address())
 
 	wallets.Wallets[address] = wallet
 

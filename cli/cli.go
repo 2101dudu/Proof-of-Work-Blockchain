@@ -27,12 +27,12 @@ func (cli *CommandLine) printUsage() {
 	fmt.Println("   startnode -miner ADDRESS —— Start a node with ID specified in NODE_ID .env variable; miner enables mining")
 }
 
-func (cli *CommandLine) getBalance(address string) {
+func (cli *CommandLine) getBalance(address string, nodeID string) {
 	if !wallet.ValidateAddress(address) {
 		log.Panic("Address is invalid")
 	}
 
-	chain := blockchain.ContinueBlockChain()
+	chain := blockchain.ContinueBlockChain(nodeID)
 	UTXOSet := blockchain.UTXOSet{Blockchain: chain}
 	defer chain.Database.Close()
 
@@ -232,7 +232,7 @@ func (cli *CommandLine) Run() {
 			getBalanceCmd.Usage()
 			runtime.Goexit()
 		}
-		cli.getBalance(*getBalanceAddresss)
+		cli.getBalance(*getBalanceAddresss, nodeID)
 	}
 
 	if createBlockChainCmd.Parsed() {

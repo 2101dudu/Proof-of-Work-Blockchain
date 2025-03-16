@@ -78,13 +78,10 @@ func CoinbaseTx(to, data string) *Transaction {
 }
 
 // create a new transaction
-func NewTransaction(from, to string, amount int, UTXO *UTXOSet) *Transaction {
+func NewTransaction(w *wallet.Wallet, to string, amount int, UTXO *UTXOSet) *Transaction {
 	var inputs []TransactionInput
 	var outputs []TransactionOutput
 
-	wallets, err := wallet.CreateWallets()
-	Handle(err)
-	w := wallets.GetWallet(from)
 	publicKeyHash := wallet.PublicKeyHash(w.PublicKey)
 
 	acc, validOutputs := UTXO.FindSpendableOutputs(publicKeyHash, amount)
@@ -103,6 +100,7 @@ func NewTransaction(from, to string, amount int, UTXO *UTXOSet) *Transaction {
 		}
 	}
 
+	from := fmt.Sprintf("%s", w.Address())
 	outputs = append(outputs, *NewTransactionOutput(amount, to))
 
 	// if we have tokens leftover, we need to point them to ourselves

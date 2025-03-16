@@ -82,7 +82,7 @@ func (w *Wallet) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (w Wallet) address() []byte {
+func (w Wallet) Address() []byte {
 	publicKeyHashed := PublicKeyHash(w.PublicKey)
 
 	versionedHash := append([]byte{version}, publicKeyHashed...)
