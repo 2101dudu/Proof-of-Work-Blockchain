@@ -444,6 +444,67 @@ The UTXO persistence layer stores UTXOs in a dedicated database, allowing for qu
 
 Whilst studying this, I learned that the Bitcoin blockchain, which also uses a UTXO model, occupies only around **200GB**!? This is a banger of a testament to the efficiency of the UTXO model in managing large volumes of transactions.
 
+# Merkle Tree
+
+One of the key challenges in blockchain systems is efficiently verifying transactions without processing the entire block's data. This is where Merkle Trees come in - a brilliant data structure that allows us to validate transactions with minimal computational overhead.
+
+## What is a Merkle Tree?
+
+Simply put, a Merkle Tree consists of these 3 factos:
+
+- each leaf node contains the hash of a transaction
+- each non-leaf node contains the hash of its **two** children combined
+- the root node represents a single hash that essentially "summarizes" all transactions
+
+### Simple Example
+
+Let's say we have 4 transactions (Tx1-Tx4). Here's how they form a Merkle Tree:
+
+```
+Level 2 (Root):     Hash(AB + CD)
+                         /    \
+Level 1:       Hash(A+B)      Hash(C+D)
+                /    \        /    \
+Level 0:    Hash(Tx1) Hash(Tx2) Hash(Tx3) Hash(Tx4)
+```
+
+## Why Use Merkle Trees?
+
+The beauty of Merkle Trees lies in their efficiency. Instead of verifying **every transaction** individually, we can:
+
+1. Store just the Merkle Root (32 bytes) to represent all transactions
+2. Validate any transaction by providing a "proof path" (~log2(n) hashes)
+3. Detect any changes to transactions, as they would alter the root hash
+
+### Practical Benefits
+
+| Without Merkle Tree           | With Merkle Tree                  |
+| ----------------------------- | --------------------------------- |
+| Must download entire block    | Can verify with partial data      |
+| Linear verification time O(n) | Logarithmic verification O(log n) |
+| High bandwidth usage          | Minimal data transfer             |
+
+## Implementation Details
+
+Our implementation includes some clever optimizations:
+
+- Automatic balancing by duplicating the last transaction if odd-numbered
+- Concurrent processing of transaction hashes
+- Integration with the existing UTXO model
+
+The most significant change is in how we calculate transaction hashes. Instead of a simple SHA256 of concatenated transactions, we now use:
+
+```go
+tree := newMerkleTree(txHashes)
+return tree.RootNode.Data
+```
+
+This small change brings massive scalability benefits as the blockchain grows.
+
+## Another Fun Fact
+
+Bitcoin's Merkle Tree implementation allows you to verify a transaction with just 1KB of data from a block, even though the full block might be 1MB or larger. This is why "light clients" can operate efficiently without downloading the entire blockchain!
+
 # To do
 
 - [ ] optimize performance given a large enough number of blocks by storing each block in its separate file
