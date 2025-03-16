@@ -22,7 +22,7 @@ type Transaction struct {
 }
 
 // serialize the transaction for later hashing
-func (tx *Transaction) serialize() []byte {
+func (tx *Transaction) Serialize() []byte {
 	var encoded bytes.Buffer
 
 	enc := gob.NewEncoder(&encoded)
@@ -44,7 +44,7 @@ func (tx *Transaction) hash() []byte {
 	txCopy.ID = []byte{}
 
 	// hash the transaction's bytes
-	hash = sha256.Sum256(txCopy.serialize())
+	hash = sha256.Sum256(txCopy.Serialize())
 
 	return hash[:]
 }

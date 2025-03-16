@@ -24,11 +24,6 @@ type BlockChain struct {
 	Database *badger.DB
 }
 
-type BlockChainIterator struct {
-	CurrentHash []byte
-	Database    *badger.DB
-}
-
 // helper function to check if MANIFEST file exists, i.e., the DB
 func DBexists() bool {
 	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
@@ -141,37 +136,6 @@ func (chain *BlockChain) AddBlock(transactions []*Transaction) *Block {
 	Handle(err)
 
 	return newBlock
-}
-
-func (chain *BlockChain) Iterator() *BlockChainIterator {
-	return &BlockChainIterator{chain.LastHash, chain.Database}
-}
-
-// this iterator's Next() method traverses the linked list backwards
-func (iter *BlockChainIterator) Next() *Block {
-	var block *Block
-
-	err := iter.Database.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(iter.CurrentHash)
-		Handle(err)
-		var blockData []byte
-
-		err = item.Value(func(v []byte) error {
-			blockData = slices.Clone(v)
-
-			return nil
-		})
-
-		block = Deserialize(blockData)
-
-		return err
-	})
-	Handle(err)
-
-	// point the current hash to the previous node, effectively traversing the list backwards
-	iter.CurrentHash = block.PrevHash
-
-	return block
 }
 
 // locate the unspent transaction
