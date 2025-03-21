@@ -1,0 +1,10 @@
+{
+  "wallets": {
+    "1Mj6m81pKGKveTXeTfquoNCoXMEmn73k37": {
+      "d": "68e4ee35447e64e9c6c15c7cde2fbbe88be2aea163ceb9cfbc192ee0ced8a381",
+      "publicKeyX": "100244e3ce79372b7da58c0e1ed4a8989e48880599ef77a72cc7a1f04fde0d3e",
+      "publicKeyY": "ea25f05fbfb5ade49f54cb43d9da89f0cfb9502cc59cb819c0591fcb3fadaf9",
+      "rawPublicKey": "100244e3ce79372b7da58c0e1ed4a8989e48880599ef77a72cc7a1f04fde0d3e0ea25f05fbfb5ade49f54cb43d9da89f0cfb9502cc59cb819c0591fcb3fadaf9"
+    }
+  }
+}

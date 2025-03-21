@@ -466,7 +466,6 @@ func StartServer(nodeID, mAddress string) {
 	}
 
 	for {
-		fmt.Println("I, nodeAddress", nodeAddress, "am listening")
 		conn, err := ln.Accept()
 		if err != nil {
 			log.Panic(err)
