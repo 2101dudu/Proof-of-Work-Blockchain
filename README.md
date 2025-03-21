@@ -1,4 +1,36 @@
-This repo documents my journey in learning how to create a solid blockchain using GO. The README will be written as I go along, and the information may change during its writing.
+# Blockchain Journey in GO
+
+Welcome to my blockchain journey! This repository documents my adventure in creating a robust blockchain implementation using GO. Whether you're here to learn the fundamentals of blockchains, understand proof-of-work, or dive deep into transactions and network layers, this README is designed to give you a quick yet comprehensive overview.
+
+---
+
+## Table of Contents
+
+- [Introduction](#Blockchain-journey-in-go)
+- [Blockchain Fundamentals](#Blockchain)
+  - [Defining a Block](#defining-the-structure-of-a-block)
+  - [Constructing the Blockchain](#defining-the-blockchain)
+- [Visualizing the Blockchain](#visualizing-the-blockchain)
+- [Proof-of-Work](#proof-of-work)
+  - [Understanding the Concept](#Why-use-proof-of-work)
+  - [Implementing Proof-of-Work](#so-whats-the-actual-work)
+  - [Security Implications](#and-why-is-proof-of-work-so-safe)
+- [Persisting the Blockchain](#storing-the-blockchain)
+- [Command-Line Interface (CLI)](#cli)
+- [Transactions](#transactions)
+  - [Understanding the Concept](#so-what-is-a-transaction)
+  - [Defining a Transaction](#transaction-structure)
+  - [Transaction Examples](#practical-scenario)
+- [Wallets](#wallets)
+- [Digital Signatures](#digital-signatures)
+- [UTXO Persistance Layer](#creating-a-utxos-persistence-layer)
+- [Merkle Trees](#merkle-trees)
+  - [Understanding the Concept](#what-is-a-merkle-tree)
+  - [Usage benefits](#practical-benefits)
+- [Network Layer](#network-layer)
+- [Conclusion and Next Steps](#conclusion-and-next-steps)
+  - [Chain selection](#block-height-and-chain-selection)
+- [To Do](#to-do)
 
 # Intro
 
@@ -512,6 +544,7 @@ The final piece of our blockchain puzzle is the network layer - the component th
 ## How to implement the Network Layer?
 
 Think of the network layer as the blockchain's communication system. It enables nodes to:
+
 - Share new transactions and blocks
 - Maintain consensus about the current state
 - Handle conflicts between different versions of the blockchain
@@ -520,6 +553,7 @@ Think of the network layer as the blockchain's communication system. It enables 
 ## Node Identity
 
 Each node in our network has a unique identifier, which is used to:
+
 - Create separate databases for each node
 - Track which blocks were mined by whom
 - Manage node-specific data
@@ -535,10 +569,10 @@ This simple change allows multiple nodes to coexist on the same machine, each wi
 One of the most interesting aspects of our implementation is how we handle chain selection. When multiple nodes are mining simultaneously, we need a way to determine which chain is the "correct" one.
 
 | Scenario | Chain A Height | Chain B Height | Selected Chain |
-|----------|---------------|----------------|----------------|
-| Normal   | 100           | 100            | A (First seen) |
-| Fork     | 101           | 100            | A (Taller)     |
-| Conflict | 101           | 101            | A (First seen) |
+| -------- | -------------- | -------------- | -------------- |
+| Normal   | 100            | 100            | A (First seen) |
+| Fork     | 101            | 100            | A (Taller)     |
+| Conflict | 101            | 101            | A (First seen) |
 
 The key insight here is that we don't just look at the latest block - we consider the entire chain's height. This is implemented in our `AddBlock` method:
 
@@ -574,6 +608,7 @@ What started as a simple exploration into blockchain technology evolved into a c
 ## What We've Built
 
 Our blockchain now includes:
+
 - A robust proof-of-work system for block validation
 - A UTXO-based transaction model for secure token transfers
 - Digital signatures for transaction authentication
@@ -584,6 +619,7 @@ Our blockchain now includes:
 ## Key Learnings
 
 The most fascinating aspects we discovered were:
+
 1. How simple concepts (like linked lists) can be transformed into secure systems
 2. The elegance of the UTXO model in managing token transfers
 3. The power of cryptographic proofs in maintaining network security
