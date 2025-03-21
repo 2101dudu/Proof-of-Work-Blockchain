@@ -630,4 +630,4 @@ The most fascinating aspects we discovered were:
 - [ ] optimize performance given a large enough number of blocks by storing each block in its separate file
 - [ ] have a parameter to sign the PoW to allow dynamic difficulty levels
 - [ ] cleanup badger logs
-- [ ] fix bugs
+- [X] fix bugs
