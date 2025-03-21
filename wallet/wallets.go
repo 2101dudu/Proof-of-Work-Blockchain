@@ -7,23 +7,23 @@ import (
 	"os"
 )
 
-const walletFile = "./tmp/wallets.data"
+const walletFile = "./tmp/wallets_%s.data"
 
 type Wallets struct {
 	Wallets map[string]*Wallet `json:"wallets"`
 }
 
-func CreateWallets() (*Wallets, error) {
+func CreateWallets(nodeId string) (*Wallets, error) {
 	wallets := Wallets{}
 	wallets.Wallets = make(map[string]*Wallet)
 
-	err := wallets.loadFile()
+	err := wallets.loadFile(nodeId)
 	return &wallets, err
 }
 
 func (wallets *Wallets) AddWallet() string {
 	wallet := MakeWallet()
-	address := fmt.Sprintf("%s", wallet.address())
+	address := fmt.Sprintf("%s", wallet.Address())
 
 	wallets.Wallets[address] = wallet
 
@@ -44,7 +44,9 @@ func (wallets *Wallets) GetWallet(address string) Wallet {
 	return *wallets.Wallets[address]
 }
 
-func (wallets *Wallets) loadFile() error {
+func (wallets *Wallets) loadFile(nodeId string) error {
+	walletFile := fmt.Sprintf(walletFile, nodeId)
+
 	if _, err := os.Stat(walletFile); os.IsNotExist(err) {
 		return err
 	}
@@ -64,7 +66,9 @@ func (wallets *Wallets) loadFile() error {
 	return nil
 }
 
-func (wallets *Wallets) SaveFile() {
+func (wallets *Wallets) SaveFile(nodeId string) {
+	walletFile := fmt.Sprintf(walletFile, nodeId)
+
 	data, err := json.MarshalIndent(wallets, "", "  ")
 	if err != nil {
 		log.Panic(err)

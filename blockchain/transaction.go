@@ -22,7 +22,7 @@ type Transaction struct {
 }
 
 // serialize the transaction for later hashing
-func (tx *Transaction) serialize() []byte {
+func (tx *Transaction) Serialize() []byte {
 	var encoded bytes.Buffer
 
 	enc := gob.NewEncoder(&encoded)
@@ -32,6 +32,15 @@ func (tx *Transaction) serialize() []byte {
 	}
 
 	return encoded.Bytes()
+}
+
+func DeserializeTransaction(data []byte) Transaction {
+	var transaction Transaction
+
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+	err := decoder.Decode(&transaction)
+	Handle(err)
+	return transaction
 }
 
 // hash the transaction's bytes equivalent to the transaction's ID
@@ -44,7 +53,7 @@ func (tx *Transaction) hash() []byte {
 	txCopy.ID = []byte{}
 
 	// hash the transaction's bytes
-	hash = sha256.Sum256(txCopy.serialize())
+	hash = sha256.Sum256(txCopy.Serialize())
 
 	return hash[:]
 }
@@ -69,13 +78,10 @@ func CoinbaseTx(to, data string) *Transaction {
 }
 
 // create a new transaction
-func NewTransaction(from, to string, amount int, UTXO *UTXOSet) *Transaction {
+func NewTransaction(w *wallet.Wallet, to string, amount int, UTXO *UTXOSet) *Transaction {
 	var inputs []TransactionInput
 	var outputs []TransactionOutput
 
-	wallets, err := wallet.CreateWallets()
-	Handle(err)
-	w := wallets.GetWallet(from)
 	publicKeyHash := wallet.PublicKeyHash(w.PublicKey)
 
 	acc, validOutputs := UTXO.FindSpendableOutputs(publicKeyHash, amount)
@@ -94,6 +100,7 @@ func NewTransaction(from, to string, amount int, UTXO *UTXOSet) *Transaction {
 		}
 	}
 
+	from := fmt.Sprintf("%s", w.Address())
 	outputs = append(outputs, *NewTransactionOutput(amount, to))
 
 	// if we have tokens leftover, we need to point them to ourselves

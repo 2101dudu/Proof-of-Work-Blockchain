@@ -31,13 +31,6 @@ func NewTransactionOutput(value int, address string) *TransactionOutput {
 	return txOut
 }
 
-func (in *TransactionInput) usesKey(publicKeyHash []byte) bool {
-	// get the public key hash from the public key
-	lockingHash := wallet.PublicKeyHash(in.PublicKey)
-
-	return bytes.Compare(publicKeyHash, lockingHash) == 0
-}
-
 func (out *TransactionOutput) lock(address []byte) {
 	publicKeyHash := wallet.Base58Decode(address)
 

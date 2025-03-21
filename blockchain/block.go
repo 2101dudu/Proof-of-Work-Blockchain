@@ -3,13 +3,16 @@ package blockchain
 import (
 	"bytes"
 	"encoding/gob"
+	"time"
 )
 
 type Block struct {
+	Timestamp    int64
 	Hash         []byte         // a hash of the Data + PrevHash
 	Transactions []*Transaction // the data of a block
 	PrevHash     []byte         // linked list functionality (chain)
 	Nonce        int
+	Height       int
 }
 
 // helper function to hash the blocks' transactions
@@ -17,7 +20,7 @@ func (b *Block) HashTransactions() []byte {
 	var txHashes [][]byte
 
 	for _, tx := range b.Transactions {
-		txHashes = append(txHashes, tx.serialize())
+		txHashes = append(txHashes, tx.Serialize())
 	}
 	tree := newMerkleTree(txHashes)
 
@@ -25,8 +28,8 @@ func (b *Block) HashTransactions() []byte {
 }
 
 // create a new instance of block with the given parameters
-func createBlock(transactions []*Transaction, prevHash []byte) *Block {
-	block := &Block{[]byte{}, transactions, prevHash, 0}
+func createBlock(transactions []*Transaction, prevHash []byte, height int) *Block {
+	block := &Block{time.Now().Unix(), []byte{}, transactions, prevHash, 0, height}
 	pow := NewProof(block) // proove block's creation
 	nonce, hash := pow.Run()
 
@@ -38,7 +41,7 @@ func createBlock(transactions []*Transaction, prevHash []byte) *Block {
 
 // create a genesis block exists — without it, the first "real" block would now have a previous block hash to reference
 func genesis(coinbase *Transaction) *Block {
-	return createBlock([]*Transaction{coinbase}, []byte{})
+	return createBlock([]*Transaction{coinbase}, []byte{}, 0)
 }
 
 // GO's BadgerDB requires byte slices, so a Serialize() needs to exist

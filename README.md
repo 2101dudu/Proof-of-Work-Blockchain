@@ -505,7 +505,93 @@ This small change brings massive scalability benefits as the blockchain grows.
 
 Bitcoin's Merkle Tree implementation allows you to verify a transaction with just 1KB of data from a block, even though the full block might be 1MB or larger. This is why "light clients" can operate efficiently without downloading the entire blockchain!
 
+# Network Layer
+
+The final piece of our blockchain puzzle is the network layer - the component that allows multiple nodes to work together, validate transactions, and maintain consensus across the network. This is what transforms our local blockchain into a **distributed system**.
+
+## How to implement the Network Layer?
+
+Think of the network layer as the blockchain's communication system. It enables nodes to:
+- Share new transactions and blocks
+- Maintain consensus about the current state
+- Handle conflicts between different versions of the blockchain
+- Coordinate mining efforts
+
+## Node Identity
+
+Each node in our network has a unique identifier, which is used to:
+- Create separate databases for each node
+- Track which blocks were mined by whom
+- Manage node-specific data
+
+```go
+const dbPath = "./tmp/blocks_%s"  // %s is replaced with node ID
+```
+
+This simple change allows multiple nodes to coexist on the same machine, each with their own blockchain database.
+
+## Block Height and Chain Selection
+
+One of the most interesting aspects of our implementation is how we handle chain selection. When multiple nodes are mining simultaneously, we need a way to determine which chain is the "correct" one.
+
+| Scenario | Chain A Height | Chain B Height | Selected Chain |
+|----------|---------------|----------------|----------------|
+| Normal   | 100           | 100            | A (First seen) |
+| Fork     | 101           | 100            | A (Taller)     |
+| Conflict | 101           | 101            | A (First seen) |
+
+The key insight here is that we don't just look at the latest block - we consider the entire chain's height. This is implemented in our `AddBlock` method:
+
+```go
+if block.Height > lastBlock.Height {
+    err = txn.Set([]byte("lh"), block.Hash)
+    chain.LastHash = block.Hash
+}
+```
+
+## Database Management
+
+A crucial but often overlooked aspect is how we handle database locks and crashes. Our implementation includes a robust database recovery system:
+
+1. **Lock Detection**: We check for existing database locks
+2. **Automatic Recovery**: If a lock is found, we attempt to safely remove it
+3. **Data Integrity**: We use transaction-based updates to ensure consistency
+
+This is particularly important in a network setting where nodes might crash or lose connection.
+
+## Network Synchronization
+
+The network layer ensures that all nodes stay synchronized through a simple but effective protocol:
+
+1. **Block Propagation**: When a new block is mined, it's broadcast to all nodes
+2. **Chain Validation**: Each node validates the new block before accepting it
+3. **Height Comparison**: Nodes compare their chain heights to resolve conflicts
+
+# Conclusion
+
+What started as a simple exploration into blockchain technology evolved into a comprehensive implementation of a distributed ledger system. Through this journey, we've built a blockchain that incorporates many of the fundamental concepts that make blockchains secure and reliable.
+
+## What We've Built
+
+Our blockchain now includes:
+- A robust proof-of-work system for block validation
+- A UTXO-based transaction model for secure token transfers
+- Digital signatures for transaction authentication
+- Merkle trees for efficient transaction verification
+- A network layer supporting multiple concurrent nodes
+- Persistent storage using BadgerDB
+
+## Key Learnings
+
+The most fascinating aspects we discovered were:
+1. How simple concepts (like linked lists) can be transformed into secure systems
+2. The elegance of the UTXO model in managing token transfers
+3. The power of cryptographic proofs in maintaining network security
+4. The importance of proper data structures (think Merkle trees) in scaling systems
+
 # To do
 
 - [ ] optimize performance given a large enough number of blocks by storing each block in its separate file
 - [ ] have a parameter to sign the PoW to allow dynamic difficulty levels
+- [ ] cleanup badger logs
+- [ ] fix bugs
